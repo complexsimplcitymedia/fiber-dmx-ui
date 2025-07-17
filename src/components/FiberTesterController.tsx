@@ -6,6 +6,8 @@ const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
+  const [isContinuousFlashing, setIsContinuousFlashing] = useState<boolean>(false);
+  const [flashingIntervalId, setFlashingIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [lightOn, setLightOn] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
@@ -90,21 +92,64 @@ const FiberTesterController: React.FC = () => {
     }
   };
 
-  const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
+  const executeTransmissionSequence = async (sequence: TransmissionStep[], isLoop: boolean = false) => {
     for (const step of sequence) {
+      // Check if we should stop (for continuous flashing)
+      if (isLoop && !isContinuousFlashing) {
+        setLightOn(false);
+        return;
+      }
+      
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
         setLightOn(true);
         await new Promise(resolve => setTimeout(resolve, step.duration));
         setLightOn(false);
-        
-        // Add small gap after light unless it's the last step
-        if (step !== sequence[sequence.length - 1]) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
       } else if (step.type === 'gap') {
+        setLightOn(false);
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }
     }
+    
+    // If this is a loop and we're still supposed to be flashing, start again
+    if (isLoop && isContinuousFlashing) {
+      // Add a small delay before restarting the sequence
+      await new Promise(resolve => setTimeout(resolve, 100));
+      executeTransmissionSequence(sequence, true);
+    }
+  };
+
+  const handleStartFlash = async () => {
+    if (!selectedColor || !currentNumber || isTransmitting || isContinuousFlashing) return;
+
+    setIsContinuousFlashing(true);
+    setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
+
+    try {
+      const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
+      
+      if (!prepareResponse.success || !prepareResponse.sequence) {
+        setStatusMessage(prepareResponse.message);
+        setIsContinuousFlashing(false);
+        return;
+      }
+      
+      // Start the infinite loop
+      executeTransmissionSequence(prepareResponse.sequence, true);
+      
+    } catch (error) {
+      setStatusMessage(`Flash failed: ${error}`);
+      setIsContinuousFlashing(false);
+    }
+  };
+
+  const handleStopFlash = () => {
+    setIsContinuousFlashing(false);
+    if (flashingIntervalId) {
+      clearInterval(flashingIntervalId);
+      setFlashingIntervalId(null);
+    }
+    setLightOn(false);
+    setStatusMessage(`${selectedColor} ${currentNumber} ready`);
   };
 
   const handleSend = async () => {
@@ -124,7 +169,7 @@ const FiberTesterController: React.FC = () => {
       setStatusMessage(prepareResponse.message);
       
       // Execute the transmission sequence
-      await executeTransmissionSequence(prepareResponse.sequence);
+      await executeTransmissionSequence(prepareResponse.sequence, false);
       
       // Complete transmission
       const completeResponse = await pythonBridge.completeTransmission(selectedColor, currentNumber);
