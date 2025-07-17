@@ -29,11 +29,13 @@ class FiberTesterController:
         '9': '−−−−·'
     }
     
-    # Timing constants (in milliseconds)
-    DOT_DURATION = 200
-    DASH_DURATION = 600
-    SYMBOL_GAP = 200
-    LETTER_GAP = 600
+    # Precise Morse code timing constants (in milliseconds)
+    # Based on 1 unit = 12ms standard
+    DOT_DURATION = 12        # 1 unit
+    DASH_DURATION = 36       # 3 units
+    INTRA_LETTER_GAP = 12    # 1 unit (between dots/dashes in same letter)
+    INTER_LETTER_GAP = 36    # 3 units (between letters)
+    WORD_GAP = 84           # 7 units (between words)
     CONFIRMATION_FLASH = 1000
     
     def __init__(self):
@@ -124,8 +126,8 @@ class FiberTesterController:
         # Add letter gap
         sequence.append({
             'type': 'gap',
-            'duration': self.LETTER_GAP,
-            'description': 'Letter gap'
+            'duration': self.INTER_LETTER_GAP,
+            'description': 'Inter-letter gap'
         })
         
         # Add number transmission
@@ -134,8 +136,8 @@ class FiberTesterController:
             sequence.extend(self._pattern_to_sequence(digit_pattern, 'digit', digit))
             sequence.append({
                 'type': 'gap',
-                'duration': self.LETTER_GAP,
-                'description': f'Gap after digit {digit}'
+                'duration': self.INTER_LETTER_GAP,
+                'description': f'Inter-letter gap after digit {digit}'
             })
         
         # Add confirmation flash
@@ -173,8 +175,8 @@ class FiberTesterController:
             if i < len(pattern) - 1:
                 sequence.append({
                     'type': 'gap',
-                    'duration': self.SYMBOL_GAP,
-                    'description': 'Symbol gap'
+                    'duration': self.INTRA_LETTER_GAP,
+                    'description': 'Intra-letter gap'
                 })
         
         return sequence

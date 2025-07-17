@@ -74,11 +74,13 @@ class PythonBridge {
       '9': '−−−−·'
     };
     
-    const DOT_DURATION = 200;
-    const DASH_DURATION = 600;
-    const SYMBOL_GAP = 200;
-    const LETTER_GAP = 600;
-    const CONFIRMATION_FLASH = 1000;
+    // Precise Morse code timing (1 unit = 12ms)
+    const DOT_DURATION = 12;        // 1 unit
+    const DASH_DURATION = 36;       // 3 units  
+    const INTRA_LETTER_GAP = 12;    // 1 unit (between dots/dashes in same letter)
+    const INTER_LETTER_GAP = 36;    // 3 units (between letters)
+    const WORD_GAP = 84;            // 7 units (between words)
+    const CONFIRMATION_FLASH = 1000; // Keep longer for confirmation
     
     switch (command) {
       case 'set_color':
@@ -132,21 +134,21 @@ class PythonBridge {
         // Add color transmission
         const colorLetter = selectedColor[0].toUpperCase();
         const colorPattern = morseCode[colorLetter];
-        sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
+        sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION, INTRA_LETTER_GAP));
         sequence.push({
           type: 'gap',
-          duration: LETTER_GAP,
-          description: 'Letter gap'
+          duration: INTER_LETTER_GAP,
+          description: 'Inter-letter gap'
         });
         
         // Add number transmission
         for (const digit of selectedNumber) {
           const digitPattern = morseCode[digit];
-          sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
+          sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION, INTRA_LETTER_GAP));
           sequence.push({
             type: 'gap',
-            duration: LETTER_GAP,
-            description: `Gap after digit ${digit}`
+            duration: INTER_LETTER_GAP,
+            description: `Inter-letter gap after digit ${digit}`
           });
         }
         
@@ -199,7 +201,7 @@ class PythonBridge {
     value: string,
     dotDuration: number,
     dashDuration: number,
-    symbolGap: number
+    intraLetterGap: number
   ): TransmissionStep[] {
     const sequence: TransmissionStep[] = [];
     
@@ -228,8 +230,8 @@ class PythonBridge {
       if (i < pattern.length - 1) {
         sequence.push({
           type: 'gap',
-          duration: symbolGap,
-          description: 'Symbol gap'
+          duration: intraLetterGap,
+          description: 'Intra-letter gap'
         });
       }
     }
