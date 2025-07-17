@@ -112,8 +112,8 @@ const FiberTesterController: React.FC = () => {
     
     // If this is a loop and we're still supposed to be flashing, start again
     if (isLoop && isContinuousFlashing) {
-      // Add a small delay before restarting the sequence
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add word gap before restarting the sequence (84ms)
+      await new Promise(resolve => setTimeout(resolve, 84));
       executeTransmissionSequence(sequence, true);
     }
   };
@@ -274,7 +274,7 @@ const FiberTesterController: React.FC = () => {
         <div className="flex gap-4 justify-center mb-6">
           <button
             onClick={handleClear}
-            disabled={isTransmitting}
+            disabled={isTransmitting || isContinuousFlashing}
             className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 
               text-white rounded-lg border-2 border-gray-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -283,16 +283,41 @@ const FiberTesterController: React.FC = () => {
             Clear
           </button>
           
-          <button
-            onClick={handleSend}
-            disabled={!selectedColor || !currentNumber || isTransmitting}
-            className="flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 
-              text-white rounded-lg border-2 border-green-500 transition-all duration-200
-              hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send className="w-5 h-5" />
-            {isTransmitting ? 'Sending...' : 'Send'}
-          </button>
+          {isContinuousFlashing ? (
+            <button
+              onClick={handleStopFlash}
+              className="flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 
+                text-white rounded-lg border-2 border-red-500 transition-all duration-200
+                hover:scale-105 active:scale-95"
+            >
+              <Power className="w-5 h-5" />
+              Stop Flash
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleStartFlash}
+                disabled={!selectedColor || !currentNumber || isTransmitting}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 
+                  text-white rounded-lg border-2 border-blue-500 transition-all duration-200
+                  hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Power className="w-5 h-5" />
+                Start Flash
+              </button>
+              
+              <button
+                onClick={handleSend}
+                disabled={!selectedColor || !currentNumber || isTransmitting}
+                className="flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 
+                  text-white rounded-lg border-2 border-green-500 transition-all duration-200
+                  hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="w-5 h-5" />
+                {isTransmitting ? 'Sending...' : 'Send Once'}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Transmission History */}
