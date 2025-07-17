@@ -103,17 +103,22 @@ const FiberTesterController: React.FC = () => {
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
         setLightOn(true);
         await new Promise(resolve => setTimeout(resolve, step.duration));
-        setLightOn(false);
+        if (step.type !== 'confirmation') {
+          setLightOn(false);
+        }
       } else if (step.type === 'gap') {
         setLightOn(false);
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }
     }
     
+    // Turn off light after sequence
+    setLightOn(false);
+    
     // If this is a loop and we're still supposed to be flashing, start again
     if (isLoop && isContinuousFlashing) {
-      // Add word gap before restarting the sequence (84ms)
-      await new Promise(resolve => setTimeout(resolve, 84));
+      // Add word gap before restarting the sequence
+      await new Promise(resolve => setTimeout(resolve, 1400));
       executeTransmissionSequence(sequence, true);
     }
   };
