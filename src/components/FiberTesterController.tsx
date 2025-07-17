@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Power, Send, RotateCcw } from 'lucide-react';
 import PythonBridge, { PythonResponse, TransmissionStep } from '../utils/pythonBridge';
+import HardwareControls from './HardwareControls';
+import { HardwareTimingController, HardwareTimingConfig } from '../hardware/TimingController';
 
 const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
@@ -12,6 +14,15 @@ const FiberTesterController: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
+  const [hardwareController] = useState(() => new HardwareTimingController());
+  const [isHardwareConnected, setIsHardwareConnected] = useState(false);
+  const [hardwareConfig, setHardwareConfig] = useState<HardwareTimingConfig>({
+    dotDuration: 12000,      // 12ms in microseconds
+    dashDuration: 36000,     // 36ms in microseconds
+    intraLetterGap: 12000,   // 12ms in microseconds
+    interLetterGap: 36000,   // 36ms in microseconds
+    wordGap: 84000           // 84ms in microseconds
+  });
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -53,6 +64,18 @@ const FiberTesterController: React.FC = () => {
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
 
+  // Listen for hardware output events
+  useEffect(() => {
+    const handleHardwareOutput = (event: CustomEvent) => {
+      setLightOn(event.detail.state);
+    };
+
+    window.addEventListener('hardwareOutput', handleHardwareOutput as EventListener);
+    return () => {
+      window.removeEventListener('hardwareOutput', handleHardwareOutput as EventListener);
+    };
+  }, []);
+
   const handleColorSelect = (color: string) => {
     if (!isTransmitting) {
       pythonBridge.setColor(color).then((response: PythonResponse) => {
@@ -93,33 +116,51 @@ const FiberTesterController: React.FC = () => {
   };
 
   const executeTransmissionSequence = async (sequence: TransmissionStep[], isLoop: boolean = false) => {
-    for (const step of sequence) {
-      // Check if we should stop (for continuous flashing)
-      if (isLoop && !isContinuousFlashing) {
-        setLightOn(false);
-        return;
-      }
+    if (isHardwareConnected) {
+      // Use hardware acceleration for precise timing
+      const hardwareSequence = sequence.map(step => ({
+        type: step.type as 'dot' | 'dash' | 'gap',
+        duration: step.type === 'dot' ? hardwareConfig.dotDuration :
+                 step.type === 'dash' ? hardwareConfig.dashDuration :
+                 step.type === 'gap' ? (step.description.includes('Inter-letter') ? hardwareConfig.interLetterGap : hardwareConfig.intraLetterGap) :
+                 step.duration * 1000 // Convert ms to microseconds
+      }));
       
-      if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-        setLightOn(true);
-        await new Promise(resolve => setTimeout(resolve, step.duration));
-        if (step.type !== 'confirmation') {
-          setLightOn(false);
+      await hardwareController.executeSequence(hardwareSequence, isLoop);
+    } else {
+      // Software fallback with visual timing
+      const executeSoftwareSequence = async () => {
+        for (const step of sequence) {
+          // Check if we should stop (for continuous flashing)
+          if (isLoop && !isContinuousFlashing) {
+            setLightOn(false);
+            return;
+          }
+          
+          if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
+            setLightOn(true);
+            await new Promise(resolve => setTimeout(resolve, step.duration));
+            if (step.type !== 'confirmation') {
+              setLightOn(false);
+            }
+          } else if (step.type === 'gap') {
+            setLightOn(false);
+            await new Promise(resolve => setTimeout(resolve, step.duration));
+          }
         }
-      } else if (step.type === 'gap') {
+        
+        // Turn off light after sequence
         setLightOn(false);
-        await new Promise(resolve => setTimeout(resolve, step.duration));
-      }
-    }
-    
-    // Turn off light after sequence
-    setLightOn(false);
-    
-    // If this is a loop and we're still supposed to be flashing, start again
-    if (isLoop && isContinuousFlashing) {
-      // Add word gap before restarting the sequence
-      await new Promise(resolve => setTimeout(resolve, 1400));
-      executeTransmissionSequence(sequence, true);
+        
+        // If this is a loop and we're still supposed to be flashing, start again
+        if (isLoop && isContinuousFlashing) {
+          // Add word gap before restarting the sequence
+          await new Promise(resolve => setTimeout(resolve, 1400));
+          executeSoftwareSequence();
+        }
+      };
+      
+      await executeSoftwareSequence();
     }
   };
 
@@ -149,6 +190,7 @@ const FiberTesterController: React.FC = () => {
 
   const handleStopFlash = () => {
     setIsContinuousFlashing(false);
+    hardwareController.stop(); // Stop hardware execution
     if (flashingIntervalId) {
       clearInterval(flashingIntervalId);
       setFlashingIntervalId(null);
@@ -198,6 +240,14 @@ const FiberTesterController: React.FC = () => {
     }
   };
 
+  const handleHardwareStateChange = (connected: boolean) => {
+    setIsHardwareConnected(connected);
+  };
+
+  const handleTimingConfigChange = (config: HardwareTimingConfig) => {
+    setHardwareConfig(config);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
       <div className="max-w-2xl mx-auto">
@@ -224,6 +274,12 @@ const FiberTesterController: React.FC = () => {
             <div className="text-center mt-2 text-sm text-gray-400">Signal Light</div>
           </div>
         </div>
+
+        {/* Hardware Controls */}
+        <HardwareControls 
+          onHardwareStateChange={handleHardwareStateChange}
+          onTimingConfigChange={handleTimingConfigChange}
+        />
 
         {/* Status Display */}
         <div className="bg-gray-800 rounded-lg p-4 mb-6 border-2 border-gray-700">
