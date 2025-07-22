@@ -85,7 +85,14 @@ const FiberTesterController: React.FC = () => {
   };
 
   const handleClear = () => {
-    if (!isTransmitting) {
+    if (!isTransmitting || isLooping) {
+      // Stop any looping first
+      if (isLooping) {
+        setIsLooping(false);
+        setIsTransmitting(false);
+        stopContinuousFlashing();
+      }
+      
       pythonBridge.clearSelection().then((response: PythonResponse) => {
         setCurrentNumber('');
         setSelectedColor('');
@@ -207,37 +214,41 @@ const FiberTesterController: React.FC = () => {
     setIsLooping(true);
     setIsTransmitting(true);
 
-    const runLoop = async () => {
-      while (isLooping) {
-        try {
-          // Prepare transmission
-          const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
-          
-          if (!prepareResponse.success || !prepareResponse.sequence) {
-            setStatusMessage(prepareResponse.message);
-            break;
-          }
-          
-          setStatusMessage(`Looping ${selectedColor} ${currentNumber}...`);
-          
+    try {
+      // Prepare transmission once
+      const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
+      
+      if (!prepareResponse.success || !prepareResponse.sequence) {
+        setStatusMessage(prepareResponse.message);
+        setIsLooping(false);
+        setIsTransmitting(false);
+        return;
+      }
+      
+      setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
+      
+      // Start continuous pattern flashing
+      const runContinuousPattern = async () => {
+        while (isLooping) {
           // Execute the transmission sequence
           await executeTransmissionSequence(prepareResponse.sequence);
           
-          // Short pause between loops (500ms)
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Short pause between pattern repeats (250ms)
+          await new Promise(resolve => setTimeout(resolve, 250));
           
-          // Check if we should continue looping
+          // Check if we should continue
           if (!isLooping) break;
-          
-        } catch (error) {
-          setStatusMessage(`Loop failed: ${error}`);
-          break;
         }
-      }
-    };
+      };
 
-    // Start the loop
-    runLoop();
+      // Start the continuous pattern
+      runContinuousPattern();
+      
+    } catch (error) {
+      setStatusMessage(`Pattern failed: ${error}`);
+      setIsLooping(false);
+      setIsTransmitting(false);
+    }
   };
 
   return (
@@ -328,13 +339,13 @@ const FiberTesterController: React.FC = () => {
         <div className="flex gap-3 justify-center mb-6">
           <button
             onClick={handleClear}
-            disabled={isTransmitting || isLooping}
+            disabled={false}
             className="flex items-center gap-2 px-4 py-3 bg-gray-600 hover:bg-gray-700 
               text-white rounded-lg border-2 border-gray-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-5 h-5" />
-            Clear
+            {isLooping ? 'Stop' : 'Clear'}
           </button>
           
           <button
