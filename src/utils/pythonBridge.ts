@@ -75,10 +75,10 @@ class PythonBridge {
     };
     
     const DOT_DURATION = 50;
-    const DASH_DURATION = 150;
-    const SYMBOL_GAP = 50;
-    const LETTER_GAP = 150;
-    const CONFIRMATION_FLASH = 250;
+    const DASH_DURATION = 100;
+    const SYMBOL_GAP = 33;
+    const LETTER_GAP = 100;
+    const CONFIRMATION_FLASH = 167;
     
     switch (command) {
       case 'set_color':

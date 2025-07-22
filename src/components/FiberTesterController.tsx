@@ -117,7 +117,7 @@ const FiberTesterController: React.FC = () => {
         
         // Add small gap after light unless it's the last step
         if (step !== sequence[sequence.length - 1]) {
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 33));
         }
       } else if (step.type === 'gap') {
         await new Promise(resolve => setTimeout(resolve, step.duration));
