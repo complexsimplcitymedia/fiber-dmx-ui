@@ -192,19 +192,19 @@ const FiberTesterController: React.FC = () => {
             {/* Main enclosure */}
             <div className="w-24 h-24 rounded-full border-4 border-gray-600 bg-gray-800 relative overflow-hidden">
               {/* Diode 1 - Left side */}
-              <div className={`absolute left-0 top-0 w-1/2 h-full rounded-l-full transition-all duration-150 ${
+              <div className={`absolute left-0 top-0 w-1/2 h-full rounded-l-full transition-all duration-75 ${
                 diode1Active ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
               } ${diode1Active ? 'opacity-100' : 'opacity-30'}`}>
-                <div className={`absolute inset-1 rounded-l-full transition-all duration-150 ${
+                <div className={`absolute inset-1 rounded-l-full transition-all duration-75 ${
                   diode1Active ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
                 }`} />
               </div>
               
               {/* Diode 2 - Right side */}
-              <div className={`absolute right-0 top-0 w-1/2 h-full rounded-r-full transition-all duration-150 ${
+              <div className={`absolute right-0 top-0 w-1/2 h-full rounded-r-full transition-all duration-75 ${
                 diode2Active ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
               } ${diode2Active ? 'opacity-100' : 'opacity-30'}`}>
-                <div className={`absolute inset-1 rounded-r-full transition-all duration-150 ${
+                <div className={`absolute inset-1 rounded-r-full transition-all duration-75 ${
                   diode2Active ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
                 }`} />
               </div>
@@ -214,7 +214,7 @@ const FiberTesterController: React.FC = () => {
               
               {/* Power icon overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <Power className={`w-8 h-8 transition-all duration-150 ${
+                <Power className={`w-8 h-8 transition-all duration-75 ${
                   (diode1Active || diode2Active) ? lightColors.iconColor : 'text-gray-500'
                 }`} />
               </div>
