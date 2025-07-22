@@ -13,6 +13,7 @@ const FiberTesterController: React.FC = () => {
   const [sentHistory, setSentHistory] = useState<string[]>([]);
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
   const [continuousInterval, setContinuousInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isLooping, setIsLooping] = useState<boolean>(false);
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -131,13 +132,22 @@ const FiberTesterController: React.FC = () => {
       setContinuousInterval(null);
     }
     setIsContinuousFlashing(false);
+    setIsLooping(false);
     setDiode1Active(false);
     setDiode2Active(false);
     setStatusMessage(selectedColor && currentNumber ? `${selectedColor} ${currentNumber} ready` : 'Select color and number');
   };
 
   const handleSend = async () => {
-    if (!selectedColor || !currentNumber || isTransmitting) return;
+    if (!selectedColor || !currentNumber || (isTransmitting && !isLooping)) return;
+
+    // If already looping, stop the loop
+    if (isLooping) {
+      setIsLooping(false);
+      setIsTransmitting(false);
+      stopContinuousFlashing();
+      return;
+    }
 
     setIsTransmitting(true);
 
@@ -147,6 +157,7 @@ const FiberTesterController: React.FC = () => {
       
       if (!prepareResponse.success || !prepareResponse.sequence) {
         setStatusMessage(prepareResponse.message);
+        setIsTransmitting(false);
         return;
       }
       
@@ -165,16 +176,68 @@ const FiberTesterController: React.FC = () => {
       
       // Reset after successful transmission
       setTimeout(() => {
-        setCurrentNumber('');
-        setSelectedColor('');
-        setStatusMessage('Select color and number');
+        if (!isLooping) {
+          setCurrentNumber('');
+          setSelectedColor('');
+          setStatusMessage('Select color and number');
+        }
       }, 2000);
 
     } catch (error) {
       setStatusMessage(`Transmission failed: ${error}`);
     } finally {
-      setIsTransmitting(false);
+      if (!isLooping) {
+        setIsTransmitting(false);
+      }
     }
+  };
+
+  const handleLoop = async () => {
+    if (!selectedColor || !currentNumber) return;
+
+    if (isLooping) {
+      // Stop looping
+      setIsLooping(false);
+      setIsTransmitting(false);
+      stopContinuousFlashing();
+      return;
+    }
+
+    // Start looping
+    setIsLooping(true);
+    setIsTransmitting(true);
+
+    const runLoop = async () => {
+      while (isLooping) {
+        try {
+          // Prepare transmission
+          const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
+          
+          if (!prepareResponse.success || !prepareResponse.sequence) {
+            setStatusMessage(prepareResponse.message);
+            break;
+          }
+          
+          setStatusMessage(`Looping ${selectedColor} ${currentNumber}...`);
+          
+          // Execute the transmission sequence
+          await executeTransmissionSequence(prepareResponse.sequence);
+          
+          // Short pause between loops (500ms)
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Check if we should continue looping
+          if (!isLooping) break;
+          
+        } catch (error) {
+          setStatusMessage(`Loop failed: ${error}`);
+          break;
+        }
+      }
+    };
+
+    // Start the loop
+    runLoop();
   };
 
   return (
@@ -262,11 +325,11 @@ const FiberTesterController: React.FC = () => {
         </div>
 
         {/* Control Buttons */}
-        <div className="flex gap-4 justify-center mb-6">
+        <div className="flex gap-3 justify-center mb-6">
           <button
             onClick={handleClear}
-            disabled={isTransmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 
+            disabled={isTransmitting || isLooping}
+            className="flex items-center gap-2 px-4 py-3 bg-gray-600 hover:bg-gray-700 
               text-white rounded-lg border-2 border-gray-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -276,13 +339,29 @@ const FiberTesterController: React.FC = () => {
           
           <button
             onClick={handleSend}
-            disabled={!selectedColor || !currentNumber || isTransmitting}
-            className="flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 
+            disabled={!selectedColor || !currentNumber}
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 
               text-white rounded-lg border-2 border-green-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-5 h-5" />
-            {isTransmitting ? 'Sending...' : 'Send'}
+            {isTransmitting && !isLooping ? 'Sending...' : 'Send'}
+          </button>
+
+          <button
+            onClick={handleLoop}
+            disabled={!selectedColor || !currentNumber}
+            className={`flex items-center gap-2 px-6 py-3 text-white rounded-lg border-2 transition-all duration-200
+              hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+              ${isLooping 
+                ? 'bg-red-600 hover:bg-red-700 border-red-500' 
+                : 'bg-blue-600 hover:bg-blue-700 border-blue-500'
+              }`}
+          >
+            <div className={`w-5 h-5 ${isLooping ? 'animate-spin' : ''}`}>
+              {isLooping ? '⏹' : '🔄'}
+            </div>
+            {isLooping ? 'Stop Loop' : 'Loop'}
           </button>
         </div>
 
