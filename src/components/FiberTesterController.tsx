@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Power, Send, RotateCcw } from 'lucide-react';
 import PythonBridge, { PythonResponse, TransmissionStep } from '../utils/pythonBridge';
-import HardwareControls from './HardwareControls';
-import { HardwareTimingController, HardwareTimingConfig } from '../hardware/TimingController';
 
 const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
@@ -14,15 +12,6 @@ const FiberTesterController: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
-  const [hardwareController] = useState(() => new HardwareTimingController());
-  const [isHardwareConnected, setIsHardwareConnected] = useState(false);
-  const [hardwareConfig, setHardwareConfig] = useState<HardwareTimingConfig>({
-    dotDuration: 250000,     // 250ms in microseconds (4 Hz)
-    dashDuration: 750000,    // 750ms in microseconds
-    intraLetterGap: 250000,  // 250ms in microseconds
-    interLetterGap: 750000,  // 750ms in microseconds
-    wordGap: 1750000         // 1750ms in microseconds
-  });
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -64,18 +53,6 @@ const FiberTesterController: React.FC = () => {
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
 
-  // Listen for hardware output events
-  useEffect(() => {
-    const handleHardwareOutput = (event: CustomEvent) => {
-      setLightOn(event.detail.state);
-    };
-
-    window.addEventListener('hardwareOutput', handleHardwareOutput as EventListener);
-    return () => {
-      window.removeEventListener('hardwareOutput', handleHardwareOutput as EventListener);
-    };
-  }, []);
-
   const handleColorSelect = (color: string) => {
     if (!isTransmitting) {
       pythonBridge.setColor(color).then((response: PythonResponse) => {
@@ -116,38 +93,24 @@ const FiberTesterController: React.FC = () => {
   };
 
   const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
-    if (isHardwareConnected) {
-      // Use hardware acceleration for precise timing
-      const hardwareSequence = sequence.map(step => ({
-        type: step.type as 'dot' | 'dash' | 'gap',
-        duration: step.type === 'dot' ? hardwareConfig.dotDuration :
-                 step.type === 'dash' ? hardwareConfig.dashDuration :
-                 step.type === 'gap' ? (step.description.includes('Inter-letter') ? hardwareConfig.interLetterGap : hardwareConfig.intraLetterGap) :
-                 step.duration * 1000 // Convert ms to microseconds
-      }));
+    for (const step of sequence) {
+      console.log(`Executing step: ${step.type} for ${step.duration}ms`);
       
-      await hardwareController.executeSequence(hardwareSequence, isLoop);
-    } else {
-      // Software fallback with visual timing
-      for (const step of sequence) {
-        console.log(`Executing step: ${step.type} for ${step.duration}ms`);
-        
-        if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-          console.log('Turning light ON');
-          setLightOn(true);
-          await new Promise(resolve => setTimeout(resolve, step.duration));
-          console.log('Turning light OFF');
-          setLightOn(false);
-        } else if (step.type === 'gap') {
-          console.log('Gap - light stays OFF');
-          setLightOn(false);
-          await new Promise(resolve => setTimeout(resolve, step.duration));
-        }
+      if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
+        console.log('Turning light ON');
+        setLightOn(true);
+        await new Promise(resolve => setTimeout(resolve, step.duration));
+        console.log('Turning light OFF');
+        setLightOn(false);
+      } else if (step.type === 'gap') {
+        console.log('Gap - light stays OFF');
+        setLightOn(false);
+        await new Promise(resolve => setTimeout(resolve, step.duration));
       }
-      
-      // Ensure light is off after sequence
-      setLightOn(false);
     }
+    
+    // Ensure light is off after sequence
+    setLightOn(false);
   };
 
   const handleStartFlash = async () => {
@@ -195,7 +158,6 @@ const FiberTesterController: React.FC = () => {
   const handleStopFlash = () => {
     console.log('Stopping continuous flash');
     setIsContinuousFlashing(false);
-    hardwareController.stop(); // Stop hardware execution
     if (flashingIntervalId) {
       clearInterval(flashingIntervalId);
       setFlashingIntervalId(null);
@@ -247,14 +209,6 @@ const FiberTesterController: React.FC = () => {
     }
   };
 
-  const handleHardwareStateChange = (connected: boolean) => {
-    setIsHardwareConnected(connected);
-  };
-
-  const handleTimingConfigChange = (config: HardwareTimingConfig) => {
-    setHardwareConfig(config);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
       <div className="max-w-2xl mx-auto">
@@ -285,12 +239,6 @@ const FiberTesterController: React.FC = () => {
             <div className="text-center mt-2 text-sm text-gray-400">Signal Light</div>
           </div>
         </div>
-
-        {/* Hardware Controls */}
-        <HardwareControls 
-          onHardwareStateChange={handleHardwareStateChange}
-          onTimingConfigChange={handleTimingConfigChange}
-        />
 
         {/* Status Display */}
         <div className="bg-gray-800 rounded-lg p-4 mb-6 border-2 border-gray-700">
