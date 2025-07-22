@@ -6,8 +6,6 @@ const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
-  const [isContinuousFlashing, setIsContinuousFlashing] = useState<boolean>(false);
-  const [flashingIntervalId, setFlashingIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [lightOn, setLightOn] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
@@ -94,83 +92,25 @@ const FiberTesterController: React.FC = () => {
 
   const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
     for (const step of sequence) {
-      console.log(`Executing step: ${step.type} for ${step.duration}ms`);
-      
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-        console.log('Turning light ON');
         setLightOn(true);
         await new Promise(resolve => setTimeout(resolve, step.duration));
-        console.log('Turning light OFF');
         setLightOn(false);
+        
+        // Add small gap after light unless it's the last step
+        if (step !== sequence[sequence.length - 1]) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       } else if (step.type === 'gap') {
-        console.log('Gap - light stays OFF');
-        setLightOn(false);
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }
     }
-    
-    // Ensure light is off after sequence
-    setLightOn(false);
-  };
-
-  const handleStartFlash = async () => {
-    if (!selectedColor || !currentNumber || isTransmitting || isContinuousFlashing) return;
-
-    setIsContinuousFlashing(true);
-    setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
-    console.log('Starting continuous flash');
-
-    try {
-      const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
-      
-      if (!prepareResponse.success || !prepareResponse.sequence) {
-        setStatusMessage(prepareResponse.message);
-        setIsContinuousFlashing(false);
-        return;
-      }
-      
-      console.log('Starting infinite loop with sequence:', prepareResponse.sequence);
-      
-      // Start the infinite loop
-      const runContinuousSequence = async () => {
-        while (isContinuousFlashing) {
-          console.log('Running sequence cycle');
-          await executeTransmissionSequence(prepareResponse.sequence);
-          
-          // Check if we should continue
-          if (isContinuousFlashing) {
-            console.log('Adding word gap before next cycle');
-            await new Promise(resolve => setTimeout(resolve, 1750)); // Word gap
-          }
-        }
-        console.log('Continuous flash stopped');
-        setLightOn(false);
-      };
-      
-      runContinuousSequence();
-      
-    } catch (error) {
-      setStatusMessage(`Flash failed: ${error}`);
-      setIsContinuousFlashing(false);
-    }
-  };
-
-  const handleStopFlash = () => {
-    console.log('Stopping continuous flash');
-    setIsContinuousFlashing(false);
-    if (flashingIntervalId) {
-      clearInterval(flashingIntervalId);
-      setFlashingIntervalId(null);
-    }
-    setLightOn(false);
-    setStatusMessage(`${selectedColor} ${currentNumber} ready`);
   };
 
   const handleSend = async () => {
     if (!selectedColor || !currentNumber || isTransmitting) return;
 
     setIsTransmitting(true);
-    setStatusMessage(`Sending ${selectedColor} ${currentNumber}...`);
 
     try {
       // Prepare transmission using Python logic
@@ -184,7 +124,6 @@ const FiberTesterController: React.FC = () => {
       setStatusMessage(prepareResponse.message);
       
       // Execute the transmission sequence
-      console.log('Starting transmission sequence:', prepareResponse.sequence);
       await executeTransmissionSequence(prepareResponse.sequence);
       
       // Complete transmission
@@ -221,10 +160,6 @@ const FiberTesterController: React.FC = () => {
         {/* Status Light */}
         <div className="flex justify-center mb-8">
           <div className="relative">
-            {/* Debug info */}
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-              Light: {lightOn ? 'ON' : 'OFF'}
-            </div>
             <div className={`w-24 h-24 rounded-full border-4 border-gray-600 transition-all duration-200 ${
               lightOn ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
             }`}>
@@ -294,7 +229,7 @@ const FiberTesterController: React.FC = () => {
         <div className="flex gap-4 justify-center mb-6">
           <button
             onClick={handleClear}
-            disabled={isTransmitting || isContinuousFlashing}
+            disabled={isTransmitting}
             className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 
               text-white rounded-lg border-2 border-gray-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -303,41 +238,16 @@ const FiberTesterController: React.FC = () => {
             Clear
           </button>
           
-          {isContinuousFlashing ? (
-            <button
-              onClick={handleStopFlash}
-              className="flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 
-                text-white rounded-lg border-2 border-red-500 transition-all duration-200
-                hover:scale-105 active:scale-95"
-            >
-              <Power className="w-5 h-5" />
-              Stop Flash
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={handleStartFlash}
-                disabled={!selectedColor || !currentNumber || isTransmitting}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 
-                  text-white rounded-lg border-2 border-blue-500 transition-all duration-200
-                  hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Power className="w-5 h-5" />
-                Start Flash
-              </button>
-              
-              <button
-                onClick={handleSend}
-                disabled={!selectedColor || !currentNumber || isTransmitting}
-                className="flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 
-                  text-white rounded-lg border-2 border-green-500 transition-all duration-200
-                  hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-5 h-5" />
-                {isTransmitting ? 'Sending...' : 'Send Once'}
-              </button>
-            </>
-          )}
+          <button
+            onClick={handleSend}
+            disabled={!selectedColor || !currentNumber || isTransmitting}
+            className="flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 
+              text-white rounded-lg border-2 border-green-500 transition-all duration-200
+              hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send className="w-5 h-5" />
+            {isTransmitting ? 'Sending...' : 'Send'}
+          </button>
         </div>
 
         {/* Transmission History */}
