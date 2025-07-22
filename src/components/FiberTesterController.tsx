@@ -6,10 +6,13 @@ const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
-  const [lightOn, setLightOn] = useState<boolean>(false);
+  const [isContinuousFlashing, setIsContinuousFlashing] = useState<boolean>(false);
+  const [diode1Active, setDiode1Active] = useState<boolean>(false);
+  const [diode2Active, setDiode2Active] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
+  const [continuousInterval, setContinuousInterval] = useState<NodeJS.Timeout | null>(null);
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -91,11 +94,26 @@ const FiberTesterController: React.FC = () => {
   };
 
   const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
+    let currentDiode = 1; // Start with diode 1
+    
     for (const step of sequence) {
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-        setLightOn(true);
+        // Alternate between diodes for each flash
+        if (currentDiode === 1) {
+          setDiode1Active(true);
+          setDiode2Active(false);
+          currentDiode = 2;
+        } else {
+          setDiode1Active(false);
+          setDiode2Active(true);
+          currentDiode = 1;
+        }
+        
         await new Promise(resolve => setTimeout(resolve, step.duration));
-        setLightOn(false);
+        
+        // Turn off current diode
+        setDiode1Active(false);
+        setDiode2Active(false);
         
         // Add small gap after light unless it's the last step
         if (step !== sequence[sequence.length - 1]) {
@@ -105,6 +123,17 @@ const FiberTesterController: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }
     }
+  };
+
+  const stopContinuousFlashing = () => {
+    if (continuousInterval) {
+      clearInterval(continuousInterval);
+      setContinuousInterval(null);
+    }
+    setIsContinuousFlashing(false);
+    setDiode1Active(false);
+    setDiode2Active(false);
+    setStatusMessage(selectedColor && currentNumber ? `${selectedColor} ${currentNumber} ready` : 'Select color and number');
   };
 
   const handleSend = async () => {
@@ -160,18 +189,37 @@ const FiberTesterController: React.FC = () => {
         {/* Status Light */}
         <div className="flex justify-center mb-8">
           <div className="relative">
-            <div className={`w-24 h-24 rounded-full border-4 border-gray-600 transition-all duration-200 ${
-              lightOn ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
-            }`}>
-              <div className={`absolute inset-2 rounded-full transition-all duration-200 ${
-                lightOn ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
-              }`}>
-                <Power className={`w-8 h-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${
-                  lightOn ? lightColors.iconColor : 'text-gray-500'
+            {/* Main enclosure */}
+            <div className="w-24 h-24 rounded-full border-4 border-gray-600 bg-gray-800 relative overflow-hidden">
+              {/* Diode 1 - Left side */}
+              <div className={`absolute left-0 top-0 w-1/2 h-full rounded-l-full transition-all duration-150 ${
+                diode1Active ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
+              } ${diode1Active ? 'opacity-100' : 'opacity-30'}`}>
+                <div className={`absolute inset-1 rounded-l-full transition-all duration-150 ${
+                  diode1Active ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
+                }`} />
+              </div>
+              
+              {/* Diode 2 - Right side */}
+              <div className={`absolute right-0 top-0 w-1/2 h-full rounded-r-full transition-all duration-150 ${
+                diode2Active ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
+              } ${diode2Active ? 'opacity-100' : 'opacity-30'}`}>
+                <div className={`absolute inset-1 rounded-r-full transition-all duration-150 ${
+                  diode2Active ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
+                }`} />
+              </div>
+              
+              {/* Center divider line */}
+              <div className="absolute left-1/2 top-2 bottom-2 w-0.5 bg-gray-600 transform -translate-x-1/2" />
+              
+              {/* Power icon overlay */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Power className={`w-8 h-8 transition-all duration-150 ${
+                  (diode1Active || diode2Active) ? lightColors.iconColor : 'text-gray-500'
                 }`} />
               </div>
             </div>
-            <div className="text-center mt-2 text-sm text-gray-400">Signal Light</div>
+            <div className="text-center mt-2 text-sm text-gray-400">Dual Diode Array</div>
           </div>
         </div>
 
