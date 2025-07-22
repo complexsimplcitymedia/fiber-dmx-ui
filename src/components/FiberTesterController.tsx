@@ -206,6 +206,7 @@ const FiberTesterController: React.FC = () => {
   const startLoopingMorse = async (color: string, number: string) => {
     setLoopActive(true);
     setIsTransmitting(true);
+    
     try {
       // Prepare transmission once
       const prepareResponse = await pythonBridge.prepareTransmission(color, number);
@@ -219,15 +220,25 @@ const FiberTesterController: React.FC = () => {
       
       setStatusMessage(`Continuously flashing ${color} ${number}...`);
       
-      // Start the continuous loop
-      async function loop() {
+      // Start the continuous loop with proper state checking
+      const runLoop = async () => {
         while (loopActive) {
+          console.log('Loop iteration starting...');
           await executeTransmissionSequence(prepareResponse.sequence);
-          await delay(125); // Short gap before next run
+          console.log('Sequence complete, waiting 250ms...');
+          await delay(250);
+          console.log('Delay complete, checking if still looping...');
+          
+          // Check if we're still supposed to be looping
+          if (!loopActive) {
+            console.log('Loop stopped, breaking...');
+            break;
+          }
         }
-      }
+        console.log('Loop ended');
+      };
 
-      loop();
+      runLoop();
       
     } catch (error) {
       setStatusMessage(`Pattern failed: ${error}`);
