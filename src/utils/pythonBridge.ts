@@ -74,11 +74,11 @@ class PythonBridge {
       '9': '−−−−·'
     };
     
-    const DOT_DURATION = 100;
-    const DASH_DURATION = 300;
-    const SYMBOL_GAP = 100;
-    const LETTER_GAP = 300;
-    const CONFIRMATION_FLASH = 500;
+    const DOT_DURATION = 50;
+    const DASH_DURATION = 150;
+    const SYMBOL_GAP = 50;
+    const LETTER_GAP = 150;
+    const CONFIRMATION_FLASH = 250;
     
     switch (command) {
       case 'set_color':
