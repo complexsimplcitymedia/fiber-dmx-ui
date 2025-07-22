@@ -13,8 +13,7 @@ const FiberTesterController: React.FC = () => {
   const [sentHistory, setSentHistory] = useState<string[]>([]);
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
   const [continuousInterval, setContinuousInterval] = useState<NodeJS.Timeout | null>(null);
-  const [isLooping, setIsLooping] = useState<boolean>(false);
-  const [loopSequence, setLoopSequence] = useState<TransmissionStep[]>([]);
+  const [loopActive, setLoopActive] = useState<boolean>(false);
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -86,12 +85,10 @@ const FiberTesterController: React.FC = () => {
   };
 
   const handleClear = () => {
-    if (!isTransmitting || isLooping) {
+    if (!isTransmitting || loopActive) {
       // Stop any looping first
-      if (isLooping) {
-        setIsLooping(false);
-        setIsTransmitting(false);
-        stopContinuousFlashing();
+      if (loopActive) {
+        stopLoopingMorse();
       }
       
       pythonBridge.clearSelection().then((response: PythonResponse) => {
@@ -134,28 +131,22 @@ const FiberTesterController: React.FC = () => {
     }
   };
 
-  const stopContinuousFlashing = () => {
-    if (continuousInterval) {
-      clearInterval(continuousInterval);
-      setContinuousInterval(null);
-    }
-    setIsContinuousFlashing(false);
-    setIsLooping(false);
+  const delay = (ms: number): Promise<void> => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
+
+  const stopLoopingMorse = () => {
+    setLoopActive(false);
+    setIsTransmitting(false);
     setDiode1Active(false);
     setDiode2Active(false);
-    setStatusMessage(selectedColor && currentNumber ? `${selectedColor} ${currentNumber} ready` : 'Select color and number');
+    setStatusMessage('Select color and number');
+    setCurrentNumber('');
+    setSelectedColor('');
   };
 
   const handleSend = async () => {
-    if (!selectedColor || !currentNumber || (isTransmitting && !isLooping)) return;
-
-    // If already looping, stop the loop
-    if (isLooping) {
-      setIsLooping(false);
-      setIsTransmitting(false);
-      stopContinuousFlashing();
-      return;
-    }
+    if (!selectedColor || !currentNumber || isTransmitting) return;
 
     setIsTransmitting(true);
 
@@ -184,7 +175,7 @@ const FiberTesterController: React.FC = () => {
       
       // Reset after successful transmission
       setTimeout(() => {
-        if (!isLooping) {
+        if (!loopActive) {
           setCurrentNumber('');
           setSelectedColor('');
           setStatusMessage('Select color and number');
@@ -194,7 +185,7 @@ const FiberTesterController: React.FC = () => {
     } catch (error) {
       setStatusMessage(`Transmission failed: ${error}`);
     } finally {
-      if (!isLooping) {
+      if (!loopActive) {
         setIsTransmitting(false);
       }
     }
@@ -203,49 +194,44 @@ const FiberTesterController: React.FC = () => {
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber) return;
 
-    if (isLooping) {
+    if (loopActive) {
       // Stop looping
-      setIsLooping(false);
-      setIsTransmitting(false);
-      stopContinuousFlashing();
+      stopLoopingMorse();
       return;
     }
 
-    // Start looping
-    setIsLooping(true);
-    setIsTransmitting(true);
+    startLoopingMorse(selectedColor, currentNumber);
+  };
 
+  const startLoopingMorse = async (color: string, number: string) => {
+    setLoopActive(true);
+    setIsTransmitting(true);
     try {
       // Prepare transmission once
-      const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
+      const prepareResponse = await pythonBridge.prepareTransmission(color, number);
       
       if (!prepareResponse.success || !prepareResponse.sequence) {
         setStatusMessage(prepareResponse.message);
-        setIsLooping(false);
+        setLoopActive(false);
         setIsTransmitting(false);
         return;
       }
       
-      setLoopSequence(prepareResponse.sequence);
-      setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
+      setStatusMessage(`Continuously flashing ${color} ${number}...`);
       
-      // Execute first pattern immediately
-      await executeTransmissionSequence(prepareResponse.sequence);
-      
-      // Set up continuous repetition
-      const interval = setInterval(async () => {
-        if (isLooping) {
-          // Short pause between repeats
-          await new Promise(resolve => setTimeout(resolve, 250));
+      // Start the continuous loop
+      async function loop() {
+        while (loopActive) {
           await executeTransmissionSequence(prepareResponse.sequence);
+          await delay(125); // Short gap before next run
         }
-      }, prepareResponse.total_duration + 250);
-      
-      setContinuousInterval(interval);
+      }
+
+      loop();
       
     } catch (error) {
       setStatusMessage(`Pattern failed: ${error}`);
-      setIsLooping(false);
+      setLoopActive(false);
       setIsTransmitting(false);
     }
   };
@@ -344,7 +330,7 @@ const FiberTesterController: React.FC = () => {
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Square className="w-5 h-5" />
-            {isLooping ? 'Stop' : 'Stop'}
+            Stop
           </button>
           
           <button
@@ -355,7 +341,7 @@ const FiberTesterController: React.FC = () => {
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-5 h-5" />
-            {isTransmitting && !isLooping ? 'Sending...' : 'Send'}
+            {isTransmitting && !loopActive ? 'Sending...' : 'Send'}
           </button>
 
           <button
