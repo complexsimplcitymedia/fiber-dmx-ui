@@ -135,16 +135,6 @@ const FiberTesterController: React.FC = () => {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
 
-  const stopLoopingMorse = () => {
-    setLoopActive(false);
-    setIsTransmitting(false);
-    setDiode1Active(false);
-    setDiode2Active(false);
-    setStatusMessage('Select color and number');
-    setCurrentNumber('');
-    setSelectedColor('');
-  };
-
   const handleSend = async () => {
     if (!selectedColor || !currentNumber || isTransmitting) return;
 
@@ -200,51 +190,51 @@ const FiberTesterController: React.FC = () => {
       return;
     }
 
-    startLoopingMorse(selectedColor, currentNumber);
-  };
-
-  const startLoopingMorse = async (color: string, number: string) => {
+    // Start looping - just repeat the same Send logic infinitely
     setLoopActive(true);
     setIsTransmitting(true);
+    setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
     
-    try {
-      // Prepare transmission once
-      const prepareResponse = await pythonBridge.prepareTransmission(color, number);
-      
-      if (!prepareResponse.success || !prepareResponse.sequence) {
-        setStatusMessage(prepareResponse.message);
-        setLoopActive(false);
-        setIsTransmitting(false);
-        return;
-      }
-      
-      setStatusMessage(`Continuously flashing ${color} ${number}...`);
-      
-      // Start the continuous loop with proper state checking
-      const runLoop = async () => {
-        while (loopActive) {
-          console.log('Loop iteration starting...');
-          await executeTransmissionSequence(prepareResponse.sequence);
-          console.log('Sequence complete, waiting 250ms...');
-          await delay(250);
-          console.log('Delay complete, checking if still looping...');
+    // Infinite loop using the exact same Send logic
+    const runInfiniteLoop = async () => {
+      while (loopActive) {
+        try {
+          // Same logic as handleSend - prepare transmission
+          const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
           
-          // Check if we're still supposed to be looping
-          if (!loopActive) {
-            console.log('Loop stopped, breaking...');
-            break;
+          if (!prepareResponse.success || !prepareResponse.sequence) {
+            setStatusMessage(prepareResponse.message);
+            setLoopActive(false);
+            setIsTransmitting(false);
+            return;
           }
+          
+          // Execute the transmission sequence (same as Send)
+          await executeTransmissionSequence(prepareResponse.sequence);
+          
+          // Wait 250ms before next cycle
+          await delay(250);
+          
+        } catch (error) {
+          setStatusMessage(`Loop failed: ${error}`);
+          setLoopActive(false);
+          setIsTransmitting(false);
+          break;
         }
-        console.log('Loop ended');
-      };
+      }
+    };
+    
+    runInfiniteLoop();
+  };
 
-      runLoop();
-      
-    } catch (error) {
-      setStatusMessage(`Pattern failed: ${error}`);
-      setLoopActive(false);
-      setIsTransmitting(false);
-    }
+  const stopLoopingMorse = () => {
+    setLoopActive(false);
+    setIsTransmitting(false);
+    setDiode1Active(false);
+    setDiode2Active(false);
+    setStatusMessage('Select color and number');
+    setCurrentNumber('');
+    setSelectedColor('');
   };
 
   return (
