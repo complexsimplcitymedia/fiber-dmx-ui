@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Power, Send, RotateCcw } from 'lucide-react';
+import { Power, Send, RotateCcw, Infinity, Square } from 'lucide-react';
 import PythonBridge, { PythonResponse, TransmissionStep } from '../utils/pythonBridge';
 
 const FiberTesterController: React.FC = () => {
@@ -14,6 +14,7 @@ const FiberTesterController: React.FC = () => {
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
   const [continuousInterval, setContinuousInterval] = useState<NodeJS.Timeout | null>(null);
   const [isLooping, setIsLooping] = useState<boolean>(false);
+  const [loopSequence, setLoopSequence] = useState<TransmissionStep[]>([]);
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -225,24 +226,22 @@ const FiberTesterController: React.FC = () => {
         return;
       }
       
+      setLoopSequence(prepareResponse.sequence);
       setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
       
-      // Start continuous pattern flashing
-      const runContinuousPattern = async () => {
-        while (isLooping) {
-          // Execute the transmission sequence
-          await executeTransmissionSequence(prepareResponse.sequence);
-          
-          // Short pause between pattern repeats (250ms)
+      // Execute first pattern immediately
+      await executeTransmissionSequence(prepareResponse.sequence);
+      
+      // Set up continuous repetition
+      const interval = setInterval(async () => {
+        if (isLooping) {
+          // Short pause between repeats
           await new Promise(resolve => setTimeout(resolve, 250));
-          
-          // Check if we should continue
-          if (!isLooping) break;
+          await executeTransmissionSequence(prepareResponse.sequence);
         }
-      };
-
-      // Start the continuous pattern
-      runContinuousPattern();
+      }, prepareResponse.total_duration + 250);
+      
+      setContinuousInterval(interval);
       
     } catch (error) {
       setStatusMessage(`Pattern failed: ${error}`);
@@ -340,12 +339,12 @@ const FiberTesterController: React.FC = () => {
           <button
             onClick={handleClear}
             disabled={false}
-            className="flex items-center gap-2 px-4 py-3 bg-gray-600 hover:bg-gray-700 
+            className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 
               text-white rounded-lg border-2 border-gray-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RotateCcw className="w-5 h-5" />
-            {isLooping ? 'Stop' : 'Clear'}
+            <Square className="w-5 h-5" />
+            {isLooping ? 'Stop' : 'Stop'}
           </button>
           
           <button
@@ -355,7 +354,7 @@ const FiberTesterController: React.FC = () => {
               text-white rounded-lg border-2 border-green-500 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="w-5 h-5" />
+            <RotateCcw className="w-5 h-5" />
             {isTransmitting && !isLooping ? 'Sending...' : 'Send'}
           </button>
 
@@ -364,15 +363,10 @@ const FiberTesterController: React.FC = () => {
             disabled={!selectedColor || !currentNumber}
             className={`flex items-center gap-2 px-6 py-3 text-white rounded-lg border-2 transition-all duration-200
               hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-              ${isLooping 
-                ? 'bg-red-600 hover:bg-red-700 border-red-500' 
-                : 'bg-blue-600 hover:bg-blue-700 border-blue-500'
-              }`}
+              bg-blue-600 hover:bg-blue-700 border-blue-500`}
           >
-            <div className={`w-5 h-5 ${isLooping ? 'animate-spin' : ''}`}>
-              {isLooping ? '⏹' : '🔄'}
-            </div>
-            {isLooping ? 'Stop Loop' : 'Loop'}
+            <Infinity className="w-5 h-5" />
+            Loop
           </button>
         </div>
 
