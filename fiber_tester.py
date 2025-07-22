@@ -30,13 +30,12 @@ class FiberTesterController:
     }
     
     # Precise Morse code timing constants (in milliseconds)
-    # Visual Morse code timing constants (in milliseconds)
-    # Based on 1 unit = 200ms for visual perception
-    DOT_DURATION = 200       # 1 unit
-    DASH_DURATION = 600      # 3 units
-    INTRA_LETTER_GAP = 200   # 1 unit (between dots/dashes in same letter)
-    INTER_LETTER_GAP = 600   # 3 units (between letters)
-    WORD_GAP = 1400         # 7 units (between words)
+    # Visual Morse code timing constants (4 Hz = 250ms per unit)
+    DOT_DURATION = 250       # 1 unit (4 Hz)
+    DASH_DURATION = 750      # 3 units
+    INTRA_LETTER_GAP = 250   # 1 unit (between dots/dashes in same letter)
+    INTER_LETTER_GAP = 750   # 3 units (between letters)
+    WORD_GAP = 1750         # 7 units (between words)
     CONFIRMATION_FLASH = 1000
     
     def __init__(self):

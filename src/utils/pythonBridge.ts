@@ -75,13 +75,13 @@ class PythonBridge {
     };
     
     // Precise Morse code timing (1 unit = 12ms)
-    // Visual Morse code timing (1 unit = 200ms for visibility)
-    const DOT_DURATION = 200;       // 1 unit
-    const DASH_DURATION = 600;      // 3 units  
-    const INTRA_LETTER_GAP = 200;   // 1 unit (between dots/dashes in same letter)
-    const INTER_LETTER_GAP = 600;   // 3 units (between letters)
-    const WORD_GAP = 1400;          // 7 units (between words)
-    const CONFIRMATION_FLASH = 1000; // Keep longer for confirmation
+    // Visual Morse code timing (4 Hz = 250ms per unit)
+    const DOT_DURATION = 250;       // 1 unit (4 Hz)
+    const DASH_DURATION = 750;      // 3 units  
+    const INTRA_LETTER_GAP = 250;   // 1 unit (between dots/dashes in same letter)
+    const INTER_LETTER_GAP = 750;   // 3 units (between letters)
+    const WORD_GAP = 1750;          // 7 units (between words)
+    const CONFIRMATION_FLASH = 1000; // Confirmation flash
     
     switch (command) {
       case 'set_color':

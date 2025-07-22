@@ -16,11 +16,11 @@ const HardwareControls: React.FC<HardwareControlsProps> = ({
   const [connectionType, setConnectionType] = useState<'serial' | 'usb' | 'bluetooth' | null>(null);
   const [showConfig, setShowConfig] = useState(false);
   const [config, setConfig] = useState<HardwareTimingConfig>({
-    dotDuration: 12000,      // 12ms in microseconds
-    dashDuration: 36000,     // 36ms in microseconds
-    intraLetterGap: 12000,   // 12ms in microseconds
-    interLetterGap: 36000,   // 36ms in microseconds
-    wordGap: 84000           // 84ms in microseconds
+    dotDuration: 250000,     // 250ms in microseconds (4 Hz)
+    dashDuration: 750000,    // 750ms in microseconds
+    intraLetterGap: 250000,  // 250ms in microseconds
+    interLetterGap: 750000,  // 750ms in microseconds
+    wordGap: 1750000         // 1750ms in microseconds
   });
 
   useEffect(() => {
