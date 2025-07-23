@@ -13,6 +13,8 @@ const FiberTesterController: React.FC = () => {
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
   const [loopActive, setLoopActive] = useState<boolean>(false);
   const [loopRef] = useState({ current: false });
+  const [transmissionTime, setTransmissionTime] = useState<number>(0);
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -98,6 +100,15 @@ const FiberTesterController: React.FC = () => {
   };
 
   const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
+    const startTime = Date.now();
+    setIsTimerRunning(true);
+    setTransmissionTime(0);
+    
+    // Update timer every 10ms during transmission
+    const timerInterval = setInterval(() => {
+      setTransmissionTime(Date.now() - startTime);
+    }, 10);
+    
     for (const step of sequence) {
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
         // Turn on the light
@@ -116,6 +127,11 @@ const FiberTesterController: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }
     }
+    
+    clearInterval(timerInterval);
+    const finalTime = Date.now() - startTime;
+    setTransmissionTime(finalTime);
+    setIsTimerRunning(false);
   };
 
   const delay = (ms: number): Promise<void> => {
@@ -155,6 +171,7 @@ const FiberTesterController: React.FC = () => {
         setCurrentNumber('');
         setSelectedColor('');
         setStatusMessage('Select color and number');
+        setTransmissionTime(0);
       }, 2000);
 
     } catch (error) {
@@ -175,6 +192,8 @@ const FiberTesterController: React.FC = () => {
 
     while (loopRef.current) {
       try {
+        // Reset timer for each loop cycle
+        console.log('=== Starting new loop cycle ===');
         // Diagnostic: See if Python is returning what you expect
         const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
         console.log('prepareResponse:', prepareResponse);
