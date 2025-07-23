@@ -7,8 +7,7 @@ const FiberTesterController: React.FC = () => {
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
   const [isContinuousFlashing, setIsContinuousFlashing] = useState<boolean>(false);
-  const [diode1Active, setDiode1Active] = useState<boolean>(false);
-  const [diode2Active, setDiode2Active] = useState<boolean>(false);
+  const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
   const [pythonBridge] = useState(() => PythonBridge.getInstance());
@@ -99,26 +98,15 @@ const FiberTesterController: React.FC = () => {
   };
 
   const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
-    let currentDiode = 1; // Start with diode 1
-    
     for (const step of sequence) {
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-        // Alternate between diodes for each flash
-        if (currentDiode === 1) {
-          setDiode1Active(true);
-          setDiode2Active(false);
-          currentDiode = 2;
-        } else {
-          setDiode1Active(false);
-          setDiode2Active(true);
-          currentDiode = 1;
-        }
+        // Turn on the light
+        setLightActive(true);
         
         await new Promise(resolve => setTimeout(resolve, step.duration));
         
-        // Turn off current diode
-        setDiode1Active(false);
-        setDiode2Active(false);
+        // Turn off the light
+        setLightActive(false);
         
         // Add small gap after light unless it's the last step
         if (step !== sequence[sequence.length - 1]) {
@@ -173,6 +161,7 @@ const FiberTesterController: React.FC = () => {
       setStatusMessage(`Transmission failed: ${error}`);
     } finally {
       setIsTransmitting(false);
+      setLightActive(false);
     }
   };
 
@@ -220,8 +209,7 @@ const FiberTesterController: React.FC = () => {
 
     // Reset state at the end
     setIsTransmitting(false);
-    setDiode1Active(false);
-    setDiode2Active(false);
+    setLightActive(false);
     setStatusMessage('Select color and number');
     setCurrentNumber('');
     setSelectedColor('');
@@ -231,8 +219,7 @@ const FiberTesterController: React.FC = () => {
     loopRef.current = false;
     setLoopActive(false);
     setIsTransmitting(false);
-    setDiode1Active(false);
-    setDiode2Active(false);
+    setLightActive(false);
     setStatusMessage('Select color and number');
     setCurrentNumber('');
     setSelectedColor('');
@@ -252,19 +239,19 @@ const FiberTesterController: React.FC = () => {
           <div className="relative">
             {/* Main enclosure */}
             <div className="w-24 h-24 rounded-full border-4 border-gray-600 bg-gray-800 relative overflow-hidden">
-              {/* Unified light appearance with dual diode control */}
+              {/* Single light */}
               <div className={`absolute inset-0 rounded-full transition-all duration-75 ${
-                (diode1Active || diode2Active) ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
+                lightActive ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
               }`}>
                 <div className={`absolute inset-1 rounded-full transition-all duration-75 ${
-                  (diode1Active || diode2Active) ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
+                  lightActive ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
                 }`} />
               </div>
               
               {/* Power icon overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <Power className={`w-8 h-8 transition-all duration-75 ${
-                  (diode1Active || diode2Active) ? lightColors.iconColor : 'text-gray-500'
+                  lightActive ? lightColors.iconColor : 'text-gray-500'
                 }`} />
               </div>
             </div>

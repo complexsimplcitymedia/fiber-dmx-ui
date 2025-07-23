@@ -74,8 +74,8 @@ class PythonBridge {
       '9': '−−−−·'
     };
     
-    const DOT_DURATION = 50;
-    const DASH_DURATION = 100;
+    const DOT_DURATION = 120;  // 0.12 seconds
+    const DASH_DURATION = 360;  // 0.36 seconds
     const SYMBOL_GAP = 33;
     const LETTER_GAP = 100;
     const CONFIRMATION_FLASH = 167;
