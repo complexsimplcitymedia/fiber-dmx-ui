@@ -15,6 +15,7 @@ const FiberTesterController: React.FC = () => {
   const [loopRef] = useState({ current: false });
   const [transmissionTime, setTransmissionTime] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
+  const [expectedDuration, setExpectedDuration] = useState<number>(0);
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -103,6 +104,10 @@ const FiberTesterController: React.FC = () => {
     const startTime = Date.now();
     setIsTimerRunning(true);
     setTransmissionTime(0);
+    
+    // Calculate expected duration
+    const totalExpected = sequence.reduce((sum, step) => sum + step.duration, 0);
+    setExpectedDuration(totalExpected);
     
     // Update timer every 10ms during transmission
     const timerInterval = setInterval(() => {
