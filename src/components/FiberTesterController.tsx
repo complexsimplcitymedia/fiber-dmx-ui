@@ -251,56 +251,6 @@ const FiberTesterController: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
-      {/* Full-Screen Timer Overlay */}
-      {loopActive && (
-        <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
-          <div className="text-center">
-            {/* Big Timer Display */}
-            <div className="text-9xl font-mono font-bold text-white mb-12">
-              {(transmissionTime / 1000).toFixed(2)}s
-            </div>
-            
-            {/* Status */}
-            <div className="text-4xl text-gray-300 mb-8 font-semibold">
-              Continuously flashing {selectedColor} {currentNumber}
-            </div>
-            
-            {/* Progress Bar */}
-            <div className="w-[600px] h-8 bg-gray-700 rounded-full mb-12 mx-auto overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-100 ${
-                  lightActive ? `${lightColors.on.replace('bg-', 'bg-').replace('-400', '-500')}` : 'bg-gray-600'
-                }`}
-                style={{
-                  width: expectedDuration > 0 ? `${Math.min((transmissionTime / expectedDuration) * 100, 100)}%` : '0%'
-                }}
-              />
-            </div>
-            
-            {/* Expected vs Actual */}
-            <div className="text-2xl text-gray-400 mb-12">
-              Expected: {(expectedDuration / 1000).toFixed(2)}s | 
-              {transmissionTime > expectedDuration ? (
-                <span className="text-yellow-400 ml-2">Overtime</span>
-              ) : (
-                <span className="text-green-400 ml-2">On Time</span>
-              )}
-            </div>
-            
-            {/* Large Stop Button */}
-            <button
-              onClick={handleClear}
-              className="px-16 py-8 bg-red-600 hover:bg-red-700 text-white text-3xl font-bold 
-                rounded-3xl border-4 border-red-400 animate-pulse transition-all duration-200
-                hover:scale-105 active:scale-95"
-            >
-              <Square className="w-10 h-10 inline mr-4" />
-              STOP
-            </button>
-          </div>
-        </div>
-      )}
-      
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -333,8 +283,38 @@ const FiberTesterController: React.FC = () => {
           </div>
         </div>
 
+        {/* Big Timer Display - shown when looping */}
+        {loopActive && (
+          <div className="text-center mb-8">
+            <div className="text-8xl font-mono font-bold text-white mb-4">
+              {(transmissionTime / 1000).toFixed(2)}s
+            </div>
+            <div className="text-2xl text-gray-300 mb-4 font-semibold">
+              Continuously flashing {selectedColor} {currentNumber}
+            </div>
+            <div className="w-96 h-6 bg-gray-700 rounded-full mb-4 mx-auto overflow-hidden">
+              <div 
+                className={`h-full transition-all duration-100 ${
+                  lightActive ? `${lightColors.on.replace('bg-', 'bg-').replace('-400', '-500')}` : 'bg-gray-600'
+                }`}
+                style={{
+                  width: expectedDuration > 0 ? `${Math.min((transmissionTime / expectedDuration) * 100, 100)}%` : '0%'
+                }}
+              />
+            </div>
+            <div className="text-lg text-gray-400 mb-6">
+              Expected: {(expectedDuration / 1000).toFixed(2)}s | 
+              {transmissionTime > expectedDuration ? (
+                <span className="text-yellow-400 ml-2">Overtime</span>
+              ) : (
+                <span className="text-green-400 ml-2">On Time</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Status Display */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-6 border-2 border-gray-700">
+        <div className={`bg-gray-800 rounded-lg p-4 mb-6 border-2 border-gray-700 ${loopActive ? 'opacity-50' : ''}`}>
           <div className="text-center">
             <div className="text-lg font-semibold text-white mb-2">{statusMessage}</div>
             <div className="text-sm text-gray-400">
@@ -346,7 +326,7 @@ const FiberTesterController: React.FC = () => {
         </div>
 
         {/* Color Buttons */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className={`grid grid-cols-3 gap-4 mb-6 ${loopActive ? 'opacity-50' : ''}`}>
           {colors.map((color) => (
             <button
               key={color.name}
@@ -365,7 +345,7 @@ const FiberTesterController: React.FC = () => {
         </div>
 
         {/* Number Pad */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className={`grid grid-cols-3 gap-3 mb-6 ${loopActive ? 'opacity-50' : ''}`}>
           {numbers.map((num, index) => (
             <button
               key={index}
