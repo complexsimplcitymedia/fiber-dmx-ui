@@ -253,22 +253,22 @@ const FiberTesterController: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
       {/* Full-Screen Timer Overlay */}
       {loopActive && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
           <div className="text-center">
             {/* Big Timer Display */}
-            <div className="text-8xl font-mono font-bold text-white mb-8">
+            <div className="text-9xl font-mono font-bold text-white mb-12">
               {(transmissionTime / 1000).toFixed(2)}s
             </div>
             
             {/* Status */}
-            <div className="text-2xl text-gray-300 mb-4">
+            <div className="text-4xl text-gray-300 mb-8 font-semibold">
               Continuously flashing {selectedColor} {currentNumber}
             </div>
             
             {/* Progress Bar */}
-            <div className="w-96 h-4 bg-gray-700 rounded-full mb-8 mx-auto overflow-hidden">
+            <div className="w-[600px] h-8 bg-gray-700 rounded-full mb-12 mx-auto overflow-hidden">
               <div 
-                className={`h-full transition-all duration-75 ${
+                className={`h-full transition-all duration-100 ${
                   lightActive ? `${lightColors.on.replace('bg-', 'bg-').replace('-400', '-500')}` : 'bg-gray-600'
                 }`}
                 style={{
@@ -278,7 +278,7 @@ const FiberTesterController: React.FC = () => {
             </div>
             
             {/* Expected vs Actual */}
-            <div className="text-lg text-gray-400 mb-8">
+            <div className="text-2xl text-gray-400 mb-12">
               Expected: {(expectedDuration / 1000).toFixed(2)}s | 
               {transmissionTime > expectedDuration ? (
                 <span className="text-yellow-400 ml-2">Overtime</span>
@@ -290,11 +290,11 @@ const FiberTesterController: React.FC = () => {
             {/* Large Stop Button */}
             <button
               onClick={handleClear}
-              className="px-12 py-6 bg-red-600 hover:bg-red-700 text-white text-2xl font-bold 
-                rounded-2xl border-4 border-red-400 animate-pulse transition-all duration-200
+              className="px-16 py-8 bg-red-600 hover:bg-red-700 text-white text-3xl font-bold 
+                rounded-3xl border-4 border-red-400 animate-pulse transition-all duration-200
                 hover:scale-105 active:scale-95"
             >
-              <Square className="w-8 h-8 inline mr-3" />
+              <Square className="w-10 h-10 inline mr-4" />
               STOP
             </button>
           </div>
