@@ -19,6 +19,9 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
     const interval = setInterval(() => {
       setBufferStatus(decoder.getStatus());
       
+      // Check for transmission end based on timing
+      decoder.checkForTransmissionEnd();
+      
       // Check for new decoded signals
       const newSignal = decoder.getLatestDecoded();
       if (newSignal) {

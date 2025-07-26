@@ -59,6 +59,8 @@ class SignalDecoder {
   private isDecoding = false;
   private decodingTimeout: NodeJS.Timeout | null = null;
   private latestDecoded: DecodedSignal | null = null;
+  private lastPulseTime = 0;
+  private readonly TRANSMISSION_END_GAP = 500; // 500ms gap indicates end of transmission
   
   private constructor() {}
   
@@ -73,6 +75,7 @@ class SignalDecoder {
    * Process incoming signal pulse
    */
   public processPulse(duration: number): void {
+    this.lastPulseTime = Date.now();
     const pulse: SignalPulse = {
       type: 'pulse',
       duration,
@@ -80,13 +83,14 @@ class SignalDecoder {
     };
     
     this.pulseBuffer.push(pulse);
-    this.scheduleDecoding();
+    // Don't decode immediately - wait for end of transmission signal
   }
   
   /**
    * Process gap between pulses
    */
   public processGap(duration: number): void {
+    this.lastPulseTime = Date.now();
     const gap: SignalPulse = {
       type: 'gap',
       duration,
@@ -94,16 +98,28 @@ class SignalDecoder {
     };
     
     this.pulseBuffer.push(gap);
-    this.scheduleDecoding();
+    
+    // Check if this is an end-of-transmission gap
+    if (duration >= this.TRANSMISSION_END_GAP) {
+      // Wait for a clear "end of pattern" signal (like a long pause or special marker)
+      // Only decode and update the UI after this end signal is detected
+      this.attemptDecoding();
+    }
   }
   
   /**
-   * Schedule decoding attempt after signal appears complete
+   * Check for transmission end based on time gap
    */
-  private scheduleDecoding(): void {
-    // Process immediately - no waiting for "completion"
-    // In real fiber optic systems, we decode as blocks arrive
-    this.attemptDecoding();
+  public checkForTransmissionEnd(): void {
+    const now = Date.now();
+    const timeSinceLastPulse = now - this.lastPulseTime;
+    
+    // If enough time has passed since last pulse, consider transmission complete
+    if (timeSinceLastPulse >= this.TRANSMISSION_END_GAP && this.pulseBuffer.length > 0) {
+      // Wait for a clear "end of pattern" signal (like a long pause or special marker)
+      // Only decode and update the UI after this end signal is detected
+      this.attemptDecoding();
+    }
   }
   
   /**
@@ -112,9 +128,8 @@ class SignalDecoder {
   private attemptDecoding(): void {
     if (this.pulseBuffer.length === 0) return null;
     
-    // Only attempt decoding if we have enough data for at least one character
-    const pulseCount = this.pulseBuffer.filter(p => p.type === 'pulse').length;
-    if (pulseCount < 2) return; // Need at least 2 pulses for shortest morse char
+    console.log('=== DECODING COMPLETE TRANSMISSION ===');
+    console.log('Buffer contains:', this.pulseBuffer.length, 'elements');
     
     const decodingSteps: DecodingStep[] = [];
     let confidence = 1.0;
@@ -465,6 +480,9 @@ class SignalDecoder {
     
     // Process confirmation flash
     this.processPulse(167);
+    
+    // Add end-of-transmission gap to trigger decoding
+    this.processGap(600);
     
     // Return the latest decoded result
     return this.latestDecoded;

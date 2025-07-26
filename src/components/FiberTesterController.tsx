@@ -76,6 +76,13 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
           setStatusMessage(response.message);
         }
       });
+      
+      // Add end-of-transmission gap
+      sequence.push({
+        type: 'gap',
+        duration: 600, // Long gap to signal end of transmission
+        description: 'End of transmission'
+      });
     }
   };
 
