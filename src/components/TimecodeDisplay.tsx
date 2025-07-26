@@ -89,7 +89,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       }
     }
   };
-  
+
   const handleClear = () => {
     // Stop any looping first
     if (loopActive) {
@@ -152,6 +152,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       // Execute DMX transmission
       await executeDMXTransmission(selectedColor, currentNumber);
       
+      // Add to history
+      setSentHistory(prev => [`${selectedColor} ${currentNumber}`, ...prev.slice(0, 4)]);
+      
       // Reset after successful transmission
       setTimeout(() => {
         setCurrentNumber('');
@@ -169,37 +172,23 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const handleLoop = async () => {
-    if (!selectedColor || !currentNumber || loopActive) return;
-    
+    if (!selectedColor || !currentNumber || isTransmitting) return;
+
     setLoopActive(true);
     loopRef.current = true;
-    
-    // Visual feedback - light on during transmission
     setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
-    
-    while (loopRef.current) {
-      // Create DMX frame
-      const frame = dmxController.createColorNumberFrame(selectedColor, currentNumber);
-      
-      // Transmit DMX frame over fiber optic
-      await dmxController.transmitFrame(frame);
-      
-      // Send frame to decoder
-      onDMXTransmission?.(frame);
-      
-      // Light off after transmission
-      setLightActive(false);
 
-      setIsTransmitting(false);
-      setLightActive(false);
-      
-      // Wait before next transmission
-      await new Promise(resolve => setTimeout(resolve, 100));
+    while (loopRef.current) {
+      try {
+        await executeDMXTransmission(selectedColor, currentNumber);
+        
+        // Small delay between transmissions
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error('Loop transmission error:', error);
+        break;
+      }
     }
-    
-    setStatusMessage('Select color and number');
-    setCurrentNumber('');
-    setSelectedColor('');
   };
 
   const stopLoopingMorse = () => {
@@ -268,6 +257,10 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
               
               <div className="text-lg text-emerald-400 mb-6 font-light">
                 Frame #{frameCount} | Fiber Optic @ 1 Gbps
+              </div>
+              
+              <div className="text-xs text-slate-500 font-light tracking-wider">
+                ZERO TOLERANCE SYNC
               </div>
             </div>
           </div>
@@ -383,7 +376,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
             <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
             <div className="flex flex-col items-center gap-1">
-              <RotateCcw className="w-10 h-10" />
+              <Send className="w-10 h-10" />
               <span className="text-sm">{isTransmitting && !loopActive ? 'SENDING' : 'SEND'}</span>
             </div>
           </button>
