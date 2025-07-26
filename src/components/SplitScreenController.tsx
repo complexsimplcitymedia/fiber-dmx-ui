@@ -109,7 +109,7 @@ const SplitScreenController: React.FC = () => {
               <div className="h-full relative">
                 <div className="absolute top-4 right-4 z-10">
                   <div className="bg-slate-900/80 backdrop-blur-sm rounded-lg px-3 py-1 border border-slate-600">
-                    <span className="text-blue-400 text-sm font-light tracking-wide">DECODER</span>
+                    <span className="text-emerald-400 text-sm font-light tracking-wide">DECODER - READY</span>
                   </div>
                 </div>
                 <DecoderPanel isReceiving={isTransmitting} />

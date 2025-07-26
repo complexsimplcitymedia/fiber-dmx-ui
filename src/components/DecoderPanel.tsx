@@ -13,9 +13,9 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
   const [decoder] = useState(() => SignalDecoder.getInstance());
   const [decodedSignals, setDecodedSignals] = useState<DecodedSignal[]>([]);
   const [currentDecoding, setCurrentDecoding] = useState<DecodedSignal | null>(null);
-  const [isListening, setIsListening] = useState<boolean>(true);
   const [bufferStatus, setBufferStatus] = useState({ isDecoding: false, bufferSize: 0 });
   const [timecodeSync] = useState(() => TimecodeSync.getInstance());
+  const [isAlwaysReady] = useState<boolean>(true); // Always ready, no manual control
 
   // Update buffer status periodically
   useEffect(() => {
@@ -50,7 +50,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
 
   // Simulate receiving signals when transmission is active
   useEffect(() => {
-    if (isReceiving && isListening) {
+    if (isReceiving && isAlwaysReady) {
       // This would normally be triggered by actual signal detection
       // For demo purposes, we'll simulate random signals
       const simulateRandomSignal = () => {
@@ -73,7 +73,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       const timeout = setTimeout(simulateRandomSignal, 1000);
       return () => clearTimeout(timeout);
     }
-  }, [isReceiving, isListening, decoder]);
+  }, [isReceiving, isAlwaysReady, decoder]);
 
   const getConfidenceColor = (confidence: number) => {
     // Professional equipment: 100% confidence or nothing
@@ -118,12 +118,10 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Listening Status */}
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${
-              isListening ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : 'bg-slate-500/20 border-slate-500/30 text-slate-400'
-            }`}>
-              <Activity className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />
-              <span className="text-sm font-light">{isListening ? 'LISTENING' : 'PAUSED'}</span>
+            {/* Always Ready Status */}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full border bg-emerald-500/20 border-emerald-500/30 text-emerald-400">
+              <Activity className="w-4 h-4 animate-pulse" />
+              <span className="text-sm font-light">READY</span>
             </div>
             
             {/* Buffer Status */}
@@ -178,18 +176,6 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       {/* Controls */}
       <div className="flex gap-4 mb-8">
         <button
-          onClick={() => setIsListening(!isListening)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all duration-300 font-light tracking-wide ${
-            isListening 
-              ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-500 text-white shadow-red-600/25' 
-              : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border-emerald-500 text-white shadow-emerald-600/25'
-          } shadow-xl hover:scale-105`}
-        >
-          <Activity className="w-4 h-4" />
-          {isListening ? 'PAUSE' : 'LISTEN'}
-        </button>
-        
-        <button
           onClick={handleTestDecode}
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
             text-white rounded-xl border-2 border-blue-500 transition-all duration-300 shadow-xl shadow-blue-600/25
@@ -221,7 +207,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
           {decodedSignals.length === 0 ? (
             <div className="text-center py-12">
               <Eye className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-500 font-light">Waiting for signals...</p>
+              <p className="text-slate-500 font-light">Ready - Waiting for transmissions...</p>
             </div>
           ) : (
             <div className="space-y-4 max-h-96 overflow-y-auto">
