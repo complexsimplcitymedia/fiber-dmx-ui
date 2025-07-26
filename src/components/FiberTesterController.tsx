@@ -203,4 +203,5 @@ const FiberTesterController: React.FC = () => {
       await sleep(LETTER_GAP);
     }
     
+  }
 }
