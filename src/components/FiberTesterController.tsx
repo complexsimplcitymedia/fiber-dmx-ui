@@ -395,28 +395,17 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
               key={index}
               onClick={() => handleNumberInput(num)}
               disabled={isTransmitting || loopActive || !num}
-              className={`relative h-28 rounded-2xl bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 hover:from-slate-100 hover:to-slate-200
-                border-2 border-slate-400 shadow-2xl transform transition-all duration-300
+              className={`relative h-28 rounded-2xl bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 hover:from-slate-600 hover:to-slate-700
+                border-2 border-slate-500 shadow-2xl transform transition-all duration-300
                 hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-                ${!num ? 'invisible' : ''}`}
+                ${!num ? 'invisible' : ''} text-white`}
             >
               {/* Metallic overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/10 rounded-2xl"></div>
-              <div className="absolute inset-0 border border-white/40 rounded-2xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
+              <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
               
-              {/* Retro Digital Display Background */}
-              <div className="absolute inset-2 bg-black rounded-xl border border-slate-600"></div>
-              
-              {/* Digital Number Display */}
-              <div className="relative flex items-center justify-center h-full">
-                <div className="text-6xl font-mono font-bold text-red-400 tracking-wider digital-glow"
-                     style={{
-                       fontFamily: 'monospace',
-                       textShadow: '0 0 10px #ef4444, 0 0 20px #ef4444, 0 0 30px #ef4444',
-                       filter: 'brightness(1.2)'
-                     }}>
+              <div className="relative text-5xl font-light text-white/90 flex items-center justify-center h-full tracking-wider">
                 {num}
-                </div>
               </div>
             </button>
           ))}
