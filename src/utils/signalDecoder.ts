@@ -107,65 +107,85 @@ class SignalDecoder {
   private attemptDecoding(): void {
     if (this.pulseBuffer.length === 0) return null;
     
-    console.log('=== DECODING COMPLETE TRANSMISSION ===');
+    console.log('=== PROFESSIONAL DECODE - 100% RELIABILITY REQUIRED ===');
     console.log('Buffer contains:', this.pulseBuffer.length, 'elements');
     
     const decodingSteps: DecodingStep[] = [];
-    let confidence = 1.0;
+    
+    // CRITICAL: Professional equipment requires 100% confidence or FAILURE
+    // No guessing, no "maybe" - either we know for certain or we reject
     
     // Step 1: Convert pulses to morse pattern
-    const { pattern, stepConfidence } = this.pulsesToMorsePattern(this.pulseBuffer);
-    confidence *= stepConfidence;
+    const { pattern, isValid } = this.pulsesToMorsePattern(this.pulseBuffer);
+    
+    if (!isValid) {
+      console.log('DECODE REJECTED: Invalid pulse timing detected');
+      this.pulseBuffer = [];
+      return; // Reject completely - don't show anything
+    }
     
     decodingSteps.push({
       step: 'Pulse Analysis',
       pattern: pattern,
-      interpretation: `Converted ${this.pulseBuffer.length} pulses to morse pattern`,
-      confidence: stepConfidence
+      interpretation: `VALID: Converted ${this.pulseBuffer.length} pulses to morse pattern`,
+      confidence: 1.0
     });
     
     // Step 2: Split pattern into segments (color + digits)
     const segments = this.splitMorsePattern(pattern);
     
+    if (segments.length === 0) {
+      console.log('DECODE REJECTED: No valid morse segments found');
+      this.pulseBuffer = [];
+      return; // Reject completely
+    }
+    
     decodingSteps.push({
       step: 'Pattern Segmentation',
       pattern: segments.join(' | '),
-      interpretation: `Identified ${segments.length} morse segments`,
-      confidence: segments.length > 0 ? 0.9 : 0.1
+      interpretation: `VALID: Identified ${segments.length} morse segments`,
+      confidence: 1.0
     });
     
-    if (segments.length === 0) {
-      confidence = 0;
-    }
-    
     // Step 3: Decode segments
-    const decoded = this.decodeSegments(segments);
+    const decoded = this.decodeSegmentsProfessional(segments);
+    
+    if (!decoded.isValid) {
+      console.log('DECODE REJECTED: Could not decode all segments with 100% confidence');
+      this.pulseBuffer = [];
+      return; // Reject completely
+    }
     
     decodingSteps.push({
       step: 'Character Decoding',
       pattern: decoded.chars.join(''),
-      interpretation: `Decoded to: ${decoded.chars.join('')}`,
-      confidence: decoded.confidence
+      interpretation: `VALID: Decoded to: ${decoded.chars.join('')}`,
+      confidence: 1.0
     });
     
-    confidence *= decoded.confidence;
-    
     // Step 4: Interpret as color + number
-    const interpretation = this.interpretMessage(decoded.chars);
+    const interpretation = this.interpretMessageProfessional(decoded.chars);
+    
+    if (!interpretation.isValid) {
+      console.log('DECODE REJECTED: Could not interpret as valid color/number combination');
+      this.pulseBuffer = [];
+      return; // Reject completely
+    }
     
     decodingSteps.push({
       step: 'Message Interpretation',
       pattern: interpretation.color + ' ' + interpretation.number,
-      interpretation: `Color: ${interpretation.color}, Number: ${interpretation.number}`,
-      confidence: interpretation.confidence
+      interpretation: `VALID: Color: ${interpretation.color}, Number: ${interpretation.number}`,
+      confidence: 1.0
     });
     
-    confidence *= interpretation.confidence;
+    // If we get here, we have 100% confidence in the result
+    console.log('DECODE SUCCESS: 100% confidence result');
     
     const result: DecodedSignal = {
       color: interpretation.color,
       number: interpretation.number,
-      confidence: Math.max(0, Math.min(1, confidence)),
+      confidence: 1.0, // Always 100% or we don't show it
       rawPattern: pattern,
       timestamp: Date.now(),
       decodingSteps
@@ -190,53 +210,53 @@ class SignalDecoder {
   /**
    * Convert pulse sequence to morse pattern
    */
-  private pulsesToMorsePattern(pulses: SignalPulse[]): { pattern: string; stepConfidence: number } {
+  private pulsesToMorsePattern(pulses: SignalPulse[]): { pattern: string; isValid: boolean } {
     let pattern = '';
-    let confidence = 1.0;
-    let confidenceFactors = 0;
+    let isValid = true;
     
     console.log('=== DECODER ANALYSIS ===');
     console.log('Processing pulses:', pulses.map(p => `${p.type}(${p.duration}ms)`).join(' -> '));
     
     for (const pulse of pulses) {
       if (pulse.type === 'pulse') {
+        // STRICT timing requirements - no fuzzy matching
         if (pulse.duration >= this.tolerance.DOT_MIN && pulse.duration <= this.tolerance.DOT_MAX) {
           console.log(`  ${pulse.duration}ms -> DOT (range: ${this.tolerance.DOT_MIN}-${this.tolerance.DOT_MAX})`);
           pattern += '·';
-          confidence *= 0.95; // High confidence for dots
-          confidenceFactors++;
         } else if (pulse.duration >= this.tolerance.DASH_MIN && pulse.duration <= this.tolerance.DASH_MAX) {
           console.log(`  ${pulse.duration}ms -> DASH (range: ${this.tolerance.DASH_MIN}-${this.tolerance.DASH_MAX})`);
           pattern += '−';
-          confidence *= 0.95; // High confidence for dashes
-          confidenceFactors++;
         } else {
-          // Ambiguous timing - make best guess
-          if (pulse.duration < (this.tolerance.DOT_MAX + this.tolerance.DASH_MIN) / 2) {
-            console.log(`  ${pulse.duration}ms -> DOT (ambiguous, threshold: ${(this.tolerance.DOT_MAX + this.tolerance.DASH_MIN) / 2})`);
-            pattern += '·';
-            confidence *= 0.7; // Lower confidence
-          } else {
-            console.log(`  ${pulse.duration}ms -> DASH (ambiguous, threshold: ${(this.tolerance.DOT_MAX + this.tolerance.DASH_MIN) / 2})`);
-            pattern += '−';
-            confidence *= 0.7; // Lower confidence
-          }
-          confidenceFactors++;
+          // REJECT: Timing outside acceptable range
+          console.log(`  ${pulse.duration}ms -> INVALID TIMING - REJECTING ENTIRE SIGNAL`);
+          isValid = false;
+          break;
         }
       } else if (pulse.type === 'gap') {
         if (pulse.duration >= this.tolerance.LETTER_GAP_MIN && pulse.duration <= this.tolerance.LETTER_GAP_MAX) {
           console.log(`  ${pulse.duration}ms -> LETTER_GAP (range: ${this.tolerance.LETTER_GAP_MIN}-${this.tolerance.LETTER_GAP_MAX})`);
           pattern += ' '; // Letter separator
+        } else if (pulse.duration >= this.tolerance.END_TRANSMISSION_MIN) {
+          console.log(`  ${pulse.duration}ms -> END_TRANSMISSION_GAP`);
+          // This is expected - don't add to pattern
+        } else if (pulse.duration >= this.tolerance.SYMBOL_GAP_MIN && pulse.duration <= this.tolerance.SYMBOL_GAP_MAX) {
+          console.log(`  ${pulse.duration}ms -> SYMBOL_GAP (ignored in pattern)`);
+          // Symbol gaps are ignored in pattern
+        } else {
+          // REJECT: Gap timing outside acceptable range
+          console.log(`  ${pulse.duration}ms -> INVALID GAP TIMING - REJECTING ENTIRE SIGNAL`);
+          isValid = false;
+          break;
         }
-        // Symbol gaps are ignored in pattern
       }
     }
     
     console.log(`Final decoded pattern: "${pattern}"`);
+    console.log(`Pattern validity: ${isValid ? 'VALID' : 'INVALID'}`);
     
     return { 
       pattern, 
-      stepConfidence: confidenceFactors > 0 ? Math.pow(confidence, 1/confidenceFactors) : 0 
+      isValid
     };
   }
   
@@ -248,37 +268,28 @@ class SignalDecoder {
   }
   
   /**
-   * Decode morse segments to characters
+   * Decode morse segments to characters - PROFESSIONAL VERSION (100% or reject)
    */
-  private decodeSegments(segments: string[]): { chars: string[]; confidence: number } {
+  private decodeSegmentsProfessional(segments: string[]): { chars: string[]; isValid: boolean } {
     const chars: string[] = [];
-    let totalConfidence = 1.0;
-    let decodedCount = 0;
+    let isValid = true;
     
     for (const segment of segments) {
       const char = this.morseToChar[segment];
       if (char) {
         chars.push(char);
-        totalConfidence *= 0.95; // High confidence for exact matches
-        decodedCount++;
+        console.log(`  Segment "${segment}" -> "${char}" (EXACT MATCH)`);
       } else {
-        // Try fuzzy matching for corrupted signals
-        const fuzzyMatch = this.fuzzyMorseMatch(segment);
-        if (fuzzyMatch) {
-          chars.push(fuzzyMatch.char);
-          totalConfidence *= fuzzyMatch.confidence;
-          decodedCount++;
-        } else {
-          chars.push('?');
-          totalConfidence *= 0.1; // Very low confidence for unknown
-          decodedCount++;
-        }
+        // NO FUZZY MATCHING - either exact match or reject
+        console.log(`  Segment "${segment}" -> NO EXACT MATCH - REJECTING`);
+        isValid = false;
+        break;
       }
     }
     
     return {
       chars,
-      confidence: decodedCount > 0 ? Math.pow(totalConfidence, 1/decodedCount) : 0
+      isValid
     };
   }
   
@@ -320,43 +331,37 @@ class SignalDecoder {
   }
   
   /**
-   * Interpret decoded characters as color + number message
+   * Interpret decoded characters as color + number message - PROFESSIONAL VERSION
    */
-  private interpretMessage(chars: string[]): { color?: string; number?: string; confidence: number } {
+  private interpretMessageProfessional(chars: string[]): { color?: string; number?: string; isValid: boolean } {
     if (chars.length === 0) {
-      return { confidence: 0 };
+      return { isValid: false };
     }
     
-    let confidence = 1.0;
     let color: string | undefined;
     let number: string | undefined;
+    let isValid = true;
     
-    // First character should be color - this is CRITICAL and must be right
+    // First character MUST be color - CRITICAL for technicians
     const firstChar = chars[0];
     
-    // Try exact match first
+    // ONLY exact matches allowed
     if (firstChar === 'R') {
       color = 'Red';
-      confidence *= 0.98; // Very high confidence for exact match
+      console.log(`  Color: R -> Red (EXACT MATCH)`);
     } else if (firstChar === 'G') {
       color = 'Green';
-      confidence *= 0.98; // Very high confidence for exact match
+      console.log(`  Color: G -> Green (EXACT MATCH)`);
     } else if (firstChar === 'B') {
       color = 'Blue';
-      confidence *= 0.98; // Very high confidence for exact match
+      console.log(`  Color: B -> Blue (EXACT MATCH)`);
     } else {
-      // If no exact match, try to force-decode the first morse segment as a color
-      const colorGuess = this.forceDecodeAsColor(chars.length > 0 ? this.getOriginalMorseForChar(firstChar) : '');
-      if (colorGuess) {
-        color = colorGuess.color;
-        confidence *= colorGuess.confidence;
-      } else {
-        // Last resort - if we can't decode color, mark as very low confidence
-        confidence *= 0.1;
-      }
+      // NO GUESSING - color must be exact or reject
+      console.log(`  Color: ${firstChar} -> INVALID COLOR - REJECTING`);
+      isValid = false;
     }
     
-    // Remaining characters should be digits
+    // Remaining characters MUST be valid digits
     const numberChars = chars.slice(1);
     if (numberChars.length > 0) {
       const numberStr = numberChars.join('');
@@ -366,17 +371,21 @@ class SignalDecoder {
         const num = parseInt(numberStr);
         if (num >= 0 && num <= 100) {
           number = numberStr;
-          confidence *= 0.95;
+          console.log(`  Number: ${numberStr} -> VALID (0-100 range)`);
         } else {
-          number = numberStr;
-          confidence *= 0.7; // Lower confidence for out-of-range numbers
+          console.log(`  Number: ${numberStr} -> OUT OF RANGE (0-100) - REJECTING`);
+          isValid = false;
         }
       } else {
-        confidence *= 0.2; // Very low confidence for non-numeric
+        console.log(`  Number: ${numberStr} -> NON-NUMERIC - REJECTING`);
+        isValid = false;
       }
+    } else {
+      console.log(`  Number: MISSING - REJECTING`);
+      isValid = false;
     }
     
-    return { color, number, confidence };
+    return { color, number, isValid };
   }
   
   /**

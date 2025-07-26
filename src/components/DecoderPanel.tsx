@@ -76,15 +76,13 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
   }, [isReceiving, isListening, decoder]);
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.85) return 'text-emerald-400';
-    if (confidence >= 0.65) return 'text-yellow-400';
-    return 'text-red-400';
+    // Professional equipment: 100% confidence or nothing
+    return confidence === 1.0 ? 'text-emerald-400' : 'text-red-400';
   };
 
   const getConfidenceBackground = (confidence: number) => {
-    if (confidence >= 0.85) return 'bg-emerald-500/20 border-emerald-500/30';
-    if (confidence >= 0.65) return 'bg-yellow-500/20 border-yellow-500/30';
-    return 'bg-red-500/20 border-red-500/30';
+    // Professional equipment: 100% confidence or nothing
+    return confidence === 1.0 ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30';
   };
 
   const handleTestDecode = () => {
@@ -94,7 +92,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       setTimeout(() => {
         setDecodedSignals(prev => [testSignal, ...prev.slice(0, 9)]);
         setCurrentDecoding(null);
-      }, 3000);
+      }, 1500);
     }
   };
 
@@ -151,7 +149,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
                 {currentDecoding.color} {currentDecoding.number}
               </div>
               <div className={`text-2xl font-light mb-2 ${getConfidenceColor(currentDecoding.confidence)}`}>
-                Confidence: {(currentDecoding.confidence * 100).toFixed(1)}%
+                {currentDecoding.confidence === 1.0 ? 'VERIFIED ✓' : 'REJECTED ✗'}
               </div>
               <div className="text-slate-400 font-mono text-sm tracking-wider">
                 Pattern: {currentDecoding.rawPattern}
@@ -165,7 +163,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-slate-300 font-light">{step.step}</span>
                     <span className={`text-sm ${getConfidenceColor(step.confidence)}`}>
-                      {(step.confidence * 100).toFixed(0)}%
+                      {step.confidence === 1.0 ? 'VALID' : 'INVALID'}
                     </span>
                   </div>
                   <div className="text-slate-400 text-sm mb-1 font-mono">{step.pattern}</div>
@@ -231,23 +229,20 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
                 <div key={index} className={`bg-slate-800/50 rounded-lg p-4 border ${getConfidenceBackground(signal.confidence)}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      {signal.confidence >= 0.85 ? (
+                      {signal.confidence === 1.0 ? (
                         <CheckCircle className="w-5 h-5 text-emerald-400" />
                       ) : (
-                        <AlertCircle className="w-5 h-5 text-yellow-400" />
+                        <AlertCircle className="w-5 h-5 text-red-400" />
                       )}
                       <span className={`font-light text-lg ${
                         signal.color ? 'text-slate-200' : 'text-red-400'
                       }`}>
                         {signal.color} {signal.number}
                       </span>
-                      {!signal.color && (
-                        <span className="text-red-400 text-sm ml-2">[COLOR DECODE FAILED]</span>
-                      )}
                     </div>
                     <div className="text-right">
                       <div className={`text-sm ${getConfidenceColor(signal.confidence)}`}>
-                        {(signal.confidence * 100).toFixed(1)}%
+                        {signal.confidence === 1.0 ? 'VERIFIED' : 'REJECTED'}
                       </div>
                       <div className="text-xs text-slate-500">
                         {new Date(signal.timestamp).toLocaleTimeString()}
