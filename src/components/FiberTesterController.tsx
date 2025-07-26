@@ -142,81 +142,81 @@ const FiberTesterController: React.FC = () => {
     
     // Confirmation flash
     // Confirmation flash
-  await flashLight(CONFIRMATION_FLASH);
+    await flashLight(CONFIRMATION_FLASH);
 
-  setStatusMessage('Transmission complete');
-  setIsTransmitting(false);
-};
+    setStatusMessage('Transmission complete');
+    setIsTransmitting(false);
+  };
 
-// Loop handler
-const handleLoop = async () => {
-  if (!selectedColor || !currentNumber) return;
-  setLoopActive(true);
-  loopRef.current = true;
-  setStatusMessage('Looping transmission...');
+  // Loop handler
+  const handleLoop = async () => {
+    if (!selectedColor || !currentNumber) return;
+    setLoopActive(true);
+    loopRef.current = true;
+    setStatusMessage('Looping transmission...');
 
-  while (loopRef.current) {
+    while (loopRef.current) {
+      await executeTransmission(selectedColor, currentNumber);
+      await sleep(1000); // Delay between loops
+    }
+
+    setLoopActive(false);
+    setStatusMessage('Loop stopped');
+  };
+
+  // Send button handler
+  const handleSend = async () => {
+    if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
+
+    setIsTransmitting(true);
+    setStatusMessage('Transmitting...');
     await executeTransmission(selectedColor, currentNumber);
-    await sleep(1000); // Delay between loops
-  }
+    setStatusMessage('Transmission complete');
+    setIsTransmitting(false);
+  };
 
-  setLoopActive(false);
-  setStatusMessage('Loop stopped');
-};
-
-// Send button handler
-const handleSend = async () => {
-  if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
-
-  setIsTransmitting(true);
-  setStatusMessage('Transmitting...');
-  await executeTransmission(selectedColor, currentNumber);
-  setStatusMessage('Transmission complete');
-  setIsTransmitting(false);
-};
-
-return (
-  <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
-    <h1 className="text-3xl font-bold mb-4">Fiber Tester Controller</h1>
-    <div className="grid grid-cols-3 gap-4 mb-4">
-      {colors.map((color) => (
-        <button
-          key={color.name}
-          className={`p-4 rounded ${color.bgColor} ${color.hoverColor} ${color.textColor}`}
-          onClick={() => handleColorSelect(color.name)}
-        >
-          {color.name}
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-6">
+      <h1 className="text-3xl font-bold mb-4">Fiber Tester Controller</h1>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        {colors.map((color) => (
+          <button
+            key={color.name}
+            className={`p-4 rounded ${color.bgColor} ${color.hoverColor} ${color.textColor}`}
+            onClick={() => handleColorSelect(color.name)}
+          >
+            {color.name}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {numbers.map((num, idx) => (
+          <button
+            key={idx}
+            className="bg-gray-700 hover:bg-gray-600 text-white p-4 rounded"
+            onClick={() => handleNumberInput(num)}
+          >
+            {num}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-4">
+        <button onClick={handleSend} className="bg-blue-600 p-3 rounded text-white flex items-center">
+          <Send className="mr-2" /> Send
         </button>
-      ))}
-    </div>
-    <div className="grid grid-cols-3 gap-2 mb-4">
-      {numbers.map((num, idx) => (
-        <button
-          key={idx}
-          className="bg-gray-700 hover:bg-gray-600 text-white p-4 rounded"
-          onClick={() => handleNumberInput(num)}
-        >
-          {num}
+        <button onClick={handleLoop} className="bg-yellow-600 p-3 rounded text-white flex items-center">
+          <Infinity className="mr-2" /> Loop
         </button>
-      ))}
+        <button onClick={handleClear} className="bg-red-600 p-3 rounded text-white flex items-center">
+          <Square className="mr-2" /> Stop
+        </button>
+      </div>
+      <div className="mt-6 text-center">{statusMessage}</div>
+      <div className={`w-20 h-20 mt-4 rounded-full shadow-2xl ${lightActive ? lightColors.on : 'bg-gray-700'}`}>
+        <div className={`w-10 h-10 m-5 rounded-full ${lightColors.inner}`}></div>
+      </div>
     </div>
-    <div className="flex gap-4">
-      <button onClick={handleSend} className="bg-blue-600 p-3 rounded text-white flex items-center">
-        <Send className="mr-2" /> Send
-      </button>
-      <button onClick={handleLoop} className="bg-yellow-600 p-3 rounded text-white flex items-center">
-        <Infinity className="mr-2" /> Loop
-      </button>
-      <button onClick={handleClear} className="bg-red-600 p-3 rounded text-white flex items-center">
-        <Square className="mr-2" /> Stop
-      </button>
-    </div>
-    <div className="mt-6 text-center">{statusMessage}</div>
-    <div className={`w-20 h-20 mt-4 rounded-full shadow-2xl ${lightActive ? lightColors.on : 'bg-gray-700'}`}>
-      <div className={`w-10 h-10 m-5 rounded-full ${lightColors.inner}`}></div>
-    </div>
-  </div>
-);
+  );
 };
 
 export default FiberTesterController;
