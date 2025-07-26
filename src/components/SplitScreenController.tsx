@@ -7,7 +7,7 @@ import TimecodeSync from '../utils/timecodeSync';
 const SplitScreenController: React.FC = () => {
   const [splitMode, setSplitMode] = useState<'split' | 'transmitter' | 'decoder'>('split');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
-  const [currentTransmission, setCurrentTransmission] = useState<{color: string, number: string} | null>(null);
+  const [currentTransmission, setCurrentTransmission] = useState<{color: string, number: string, timestamp: number} | null>(null);
   const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   const handleTransmissionStateChange = (transmitting: boolean) => {
@@ -15,7 +15,9 @@ const SplitScreenController: React.FC = () => {
   };
 
   const handleTransmissionData = (color: string, number: string) => {
-    setCurrentTransmission({ color, number });
+    // Add timestamp to force decoder to process each transmission
+    setCurrentTransmission({ color, number, timestamp: Date.now() });
+    console.log(`🚀 SIGNAL COMPLETE: ${color} ${number} at ${Date.now()}`);
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950">

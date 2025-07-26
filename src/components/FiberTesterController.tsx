@@ -159,8 +159,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     // Mark transmission start with EXACT timecode
     const transmissionStart = timecodeSync.markTransmissionStart();
 
-    // Notify decoder - EXACT data transfer
-    onTransmissionData?.(selectedColor, currentNumber);
     setIsTransmitting(true);
 
     try {
@@ -177,6 +175,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       
       // Execute EXACT transmission sequence
       await executeTransmissionSequence(prepareResponse.sequence);
+      
+      // SIGNAL COMPLETE - Notify decoder AFTER transmission finishes
+      onTransmissionData?.(selectedColor, currentNumber);
       
       // Complete transmission - EXACT
       const completeResponse = await pythonBridge.completeTransmission(selectedColor, currentNumber);
@@ -211,8 +212,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     setIsTransmitting(true);
     setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
 
-    // Notify decoder of transmission data
-    onTransmissionData?.(selectedColor, currentNumber);
     loopRef.current = true;
 
     while (loopRef.current) {
@@ -230,6 +229,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
         // Execute EXACT flash sequence
         await executeTransmissionSequence(prepareResponse.sequence);
+
+        // SIGNAL COMPLETE - Notify decoder after each loop cycle
+        onTransmissionData?.(selectedColor, currentNumber);
 
         // No delay between loops - EXACT continuous operation
 

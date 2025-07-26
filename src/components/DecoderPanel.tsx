@@ -6,7 +6,7 @@ import TimecodeSync from '../utils/timecodeSync';
 
 interface DecoderPanelProps {
   isReceiving: boolean;
-  transmissionData?: {color: string, number: string} | null;
+  transmissionData?: {color: string, number: string, timestamp: number} | null;
   onSimulateReceive?: (color: string, number: string) => void;
 }
 
@@ -51,7 +51,9 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
 
   // EXACT signal reception - no simulation delays
   useEffect(() => {
-    if (isReceiving && isListening && transmissionData) {
+    if (isListening && transmissionData) {
+      console.log(`🎯 DECODER RECEIVED: ${transmissionData.color} ${transmissionData.number} at ${transmissionData.timestamp}`);
+      
       // EXACT decoding - mathematical precision
       const { color, number } = transmissionData;
       
@@ -69,7 +71,6 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
         }, 1000); // EXACT 1 second
       }
     }
-  }, [isReceiving, isListening, transmissionData, decoder, timecodeSync]);
 
   const getConfidenceColor = (confidence: number) => {
     // EXACT confidence: 1.0 or rejection
