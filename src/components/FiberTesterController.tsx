@@ -219,12 +219,12 @@ const FiberTesterController: React.FC = () => {
                     {selectedColor && currentNumber && <span className="text-gray-400 mx-2">•</span>}
                     {currentNumber && <span className="text-green-400">{currentNumber}</span>}
                     {!selectedColor && !currentNumber && <span className="text-gray-500">-- --</span>}
+                    {selectedColor && currentNumber && (
+                      <span className="text-yellow-400 ml-4 font-mono text-lg">
+                        {MORSE_PATTERNS[selectedColor[0].toUpperCase()]} {currentNumber.split('').map(digit => MORSE_PATTERNS[digit]).join(' ')}
+                      </span>
+                    )}
                   </div>
-                  {selectedColor && currentNumber && (
-                    <div className="text-yellow-400 font-mono text-lg ml-4">
-                      {MORSE_PATTERNS[selectedColor[0].toUpperCase()]}{currentNumber.split('').map(digit => MORSE_PATTERNS[digit]).join(' ')}
-                    </div>
-                  )}
                 </div>
                 <div className="text-sm text-gray-400 mt-1">{statusMessage}</div>
               </div>
