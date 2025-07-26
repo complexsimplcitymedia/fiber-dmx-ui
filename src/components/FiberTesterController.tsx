@@ -149,7 +149,7 @@ const FiberTesterController: React.FC = () => {
   // Execute complete Morse transmission
   const executeMorseTransmission = async (color: string, number: string) => {
     // Flash color pattern
-    const colorLetter = color[0].toUpperCase();
+    const colorLetter = color[0].toUpperCase(); // R, G, or B only
     const colorPattern = MORSE_PATTERNS[colorLetter];
     if (colorPattern) {
       await flashMorsePattern(colorPattern);
