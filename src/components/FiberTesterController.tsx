@@ -334,6 +334,7 @@ const FiberTesterController: React.FC = () => {
             <div className="text-sm text-slate-400 font-light">
               {(transmissionTime / 1000).toFixed(2)}s
             </div>
+            <div className="text-sm text-slate-400 font-light">
               {selectedColor && `Color: ${selectedColor}`}
               {selectedColor && currentNumber && ' | '}
               {currentNumber && `Number: ${currentNumber}`}
