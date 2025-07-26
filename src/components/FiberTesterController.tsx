@@ -10,26 +10,28 @@ const FiberTesterController: React.FC = () => {
   const [loopActive, setLoopActive] = useState<boolean>(false);
   const [loopRef, setLoopRef] = useState<{ current: boolean }>({ current: false });
 
+  // Perfect timing constants - EXACT
   const DOT_DURATION = 120;
   const DASH_DURATION = 360;
   const SYMBOL_GAP = 120;
   const LETTER_GAP = 840;
   const CONFIRMATION_FLASH = 990;
 
+  // Correct International Morse Code patterns
   const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '·−·',     // dot-dash-dot
-    'G': '−−·',     // dash-dash-dot  
-    'B': '−···',    // dash-dot-dot-dot
-    '0': '−−−−−',   // 5 dashes
-    '1': '·−−−−',   // dot + 4 dashes
-    '2': '··−−−',   // 2 dots + 3 dashes
-    '3': '···−−',   // 3 dots + 2 dashes
-    '4': '····−',   // 4 dots + 1 dash
-    '5': '·····',   // 5 dots
-    '6': '−····',   // 1 dash + 4 dots
-    '7': '−−···',   // 2 dashes + 3 dots
-    '8': '−−−··',   // 3 dashes + 2 dots
-    '9': '−−−−·'    // 4 dashes + 1 dot
+    'R': '·−·',     // Red
+    'G': '−−·',     // Green  
+    'B': '−···',    // Blue
+    '0': '−−−−−',
+    '1': '·−−−−',
+    '2': '··−−−',
+    '3': '···−−',
+    '4': '····−',
+    '5': '·····',
+    '6': '−····',
+    '7': '−−···',
+    '8': '−−−··',
+    '9': '−−−−·'
   };
 
   const colors = [
@@ -40,6 +42,7 @@ const FiberTesterController: React.FC = () => {
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
 
+  // Get light colors based on selected color
   const getLightColors = () => {
     switch (selectedColor) {
       case 'Red':
@@ -63,6 +66,7 @@ const FiberTesterController: React.FC = () => {
 
   const handleNumberInput = (num: string) => {
     if (isTransmitting || loopActive) return;
+    
     if (currentNumber.length < 3) {
       const newNumber = currentNumber + num;
       if (newNumber !== '0' && newNumber !== '00') {
@@ -73,64 +77,68 @@ const FiberTesterController: React.FC = () => {
   };
 
   const handleClear = () => {
+    // Stop loop immediately
     setLoopActive(false);
     loopRef.current = false;
     setIsTransmitting(false);
     setLightActive(false);
+    
+    // Clear selections
     setCurrentNumber('');
     setSelectedColor('');
     setStatusMessage('Select color and number');
   };
 
+  // Sleep function
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+  // Flash light for specific duration
   const flashLight = async (duration: number) => {
     setLightActive(true);
     await sleep(duration);
     setLightActive(false);
   };
 
+  // Transmit single Morse pattern
   const transmitMorsePattern = async (pattern: string) => {
     for (let i = 0; i < pattern.length; i++) {
-      if (!loopRef.current && loopActive) break;
+      if (!loopRef.current && loopActive) break; // Check if loop was stopped
+      
       const symbol = pattern[i];
+      
       if (symbol === '·') {
         await flashLight(DOT_DURATION);
       } else if (symbol === '−') {
         await flashLight(DASH_DURATION);
       }
+      
+      // Symbol gap (except after last symbol)
       if (i < pattern.length - 1) {
         await sleep(SYMBOL_GAP);
       }
     }
   };
 
+  // Complete transmission sequence
   const executeTransmission = async (color: string, number: string) => {
+    // Transmit color
     const colorLetter = color[0].toUpperCase();
     const colorPattern = MORSE_PATTERNS[colorLetter];
     if (colorPattern) {
       await transmitMorsePattern(colorPattern);
       await sleep(LETTER_GAP);
     }
-
+    
+    // Transmit each digit
     for (const digit of number) {
-      if (!loopRef.current && loopActive) break;
+      if (!loopRef.current && loopActive) break; // Check if loop was stopped
+      
       const digitPattern = MORSE_PATTERNS[digit];
       if (digitPattern) {
         await transmitMorsePattern(digitPattern);
         await sleep(LETTER_GAP);
       }
     }
-
-    await flashLight(990);
-  };
-
-  return (
-    <div className="min-h-screen p-8">
-      {/* Add buttons and interface here if needed */}
-      <p className="text-white">{statusMessage}</p>
-    </div>
-  );
-};
-
-export default FiberTesterController;
+    
+    // Confirmation flash
+    awai
