@@ -1,50 +1,56 @@
-# Fiber Optic Communication System
+# Fiber Optic Communication System - Separated Projects
 
-Professional fiber tester controller with Morse code transmission and decoding capabilities.
+Two separate applications that communicate over different ports for real signal transmission.
 
 ## Architecture
 
-- **Frontend**: React + TypeScript (Port 3000)
-- **Backend**: Python HTTP Server (Port 8000)
-- **Communication**: REST API between frontend and backend
+- **Transmitter**: React app on Port 3000
+- **Receiver**: React app on Port 3001  
+- **Communication**: Real HTTP requests between ports
 
 ## Running the System
 
-### Option 1: Separate Ports (Realistic Testing)
-
-**Terminal 1 - Backend Server:**
+### Terminal 1 - Transmitter:
 ```bash
-python backend-server.py
-# Runs on http://localhost:8000
-```
-
-**Terminal 2 - Frontend:**
-```bash
+cd transmitter
+npm install
 npm run dev
 # Runs on http://localhost:3000
 ```
 
-### Option 2: Single Development Server
+### Terminal 2 - Receiver:
 ```bash
+cd receiver
+npm install  
 npm run dev
-# Frontend only with simulation fallback
+# Runs on http://localhost:3001
 ```
 
-## API Endpoints
+## How It Works
 
-- `GET /api/health` - Backend health check
-- `POST /api/set-color` - Set transmission color
-- `POST /api/set-number` - Set transmission number
-- `POST /api/prepare` - Prepare transmission sequence
-- `POST /api/complete` - Complete transmission
-- `POST /api/clear` - Clear selection
-- `GET /api/status` - Get system status
+1. **Transmitter (Port 3000)**:
+   - Select color and number
+   - Click SEND to transmit
+   - Sends HTTP POST to `http://localhost:3001/api/receive-signal`
+
+2. **Receiver (Port 3001)**:
+   - Listens for incoming signals
+   - Displays received transmissions
+   - Shows real-time signal history
+
+## Real Communication
+
+- Actual HTTP requests between ports
+- Real network communication
+- True client-server architecture
+- Demonstrates fiber optic concept with separate endpoints
 
 ## Features
 
-- **Split Screen Interface**: Transmitter and Decoder views
-- **Professional Timecode Sync**: Frame-accurate timing display
-- **Morse Code Transmission**: Color + Number encoding
-- **Real-time Decoding**: Signal analysis and pattern matching
-- **Retro Digital Displays**: LCD/LED style number displays
-- **Work-Ready Interface**: Large buttons for industrial use
+- **Professional Interface**: Industrial-grade controls
+- **Real Transmission**: HTTP communication between ports
+- **Signal History**: Track all received transmissions
+- **Status Indicators**: Connection and server status
+- **Loop Mode**: Continuous transmission capability
+
+This setup allows for genuine signal transmission between separate applications, demonstrating the fiber optic communication concept with real network protocols.
