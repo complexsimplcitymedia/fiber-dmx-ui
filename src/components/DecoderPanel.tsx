@@ -71,6 +71,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
         }, 1000); // EXACT 1 second
       }
     }
+  }, [isListening, transmissionData, decoder, timecodeSync]);
 
   const getConfidenceColor = (confidence: number) => {
     // EXACT confidence: 1.0 or rejection
