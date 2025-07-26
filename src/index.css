@@ -2,21 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Retro Digital Display Styles */
-.digital-glow {
+/* Retro Digital Display Styles for LCD/LED Screens */
+.retro-digital-display {
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: #00ff41;
   text-shadow: 
-    0 0 5px currentColor,
-    0 0 10px currentColor,
-    0 0 15px currentColor,
-    0 0 20px currentColor;
+    0 0 10px #00ff41,
+    0 0 20px #00ff41,
+    0 0 30px #00ff41,
+    0 0 40px #00ff41;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  border: 2px solid #333;
+  display: inline-block;
+  min-height: 1.5em;
 }
 
-/* Digital segment style for numbers */
-@layer components {
-  .digital-number {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    letter-spacing: 0.1em;
-    text-rendering: optimizeLegibility;
-  }
+.retro-digital-text {
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  color: #00ff41;
+  font-size: 1.5rem;
+  text-shadow: 
+    0 0 5px #00ff41,
+    0 0 10px #00ff41;
 }

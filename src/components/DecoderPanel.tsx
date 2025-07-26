@@ -180,12 +180,14 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       <div className="flex gap-4 mb-8">
         <button
           onClick={() => setIsListening(!isListening)}
-          className={`h-28 rounded-2xl flex items-center justify-center gap-2 border-2 transition-all duration-300 font-light tracking-wide overflow-hidden ${
+          className={`relative h-28 rounded-2xl flex items-center justify-center gap-2 border-2 transition-all duration-300 font-light tracking-wide overflow-hidden ${
             isListening 
-              ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-500 text-white shadow-red-600/25' 
-              : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border-emerald-500 text-white shadow-emerald-600/25'
+              ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-500 text-white shadow-2xl shadow-red-600/25' 
+              : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border-emerald-500 text-white shadow-2xl shadow-emerald-600/25'
           } shadow-2xl hover:scale-105`}
         >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
+          <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
           <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
           <div className="flex flex-col items-center gap-1">
