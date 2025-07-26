@@ -7,15 +7,11 @@ import TimecodeSync from '../utils/timecodeSync';
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
   onDMXTransmission?: (frame: DMXFrame) => void;
-  onTransmissionPulse?: (duration: number) => void;
-  onTransmissionGap?: (duration: number) => void;
 }
 
 const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
   onTransmissionChange, 
-  onDMXTransmission,
-  onTransmissionPulse,
-  onTransmissionGap
+  onDMXTransmission
 }) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
@@ -87,13 +83,13 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     
     if (currentNumber.length < 3) {
       const newNumber = currentNumber + num;
-      if (newNumber.length <= 3) {
+      if (newNumber !== '0' && newNumber !== '00') {
         setCurrentNumber(newNumber);
         setStatusMessage(selectedColor ? `${selectedColor} ${newNumber} ready` : `Number ${newNumber} set - Select color`);
       }
     }
   };
-
+  
   const handleClear = () => {
     // Stop any looping first
     if (loopActive) {
@@ -101,9 +97,11 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       return;
     }
     
-    setCurrentNumber('');
-    setSelectedColor('');
-    setStatusMessage('Select color and number');
+    if (!isTransmitting) {
+      setCurrentNumber('');
+      setSelectedColor('');
+      setStatusMessage('Select color and number');
+    }
   };
 
   const executeDMXTransmission = async (color: string, number: string) => {
@@ -121,8 +119,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       setTransmissionTime(Date.now() - startTime);
     }, 1);
     
-    // LIGHT BEAM PHYSICS - Generate real Morse timing
-    await transmitMorseSequence(color, number);
+    // Visual feedback - light on during transmission
+    setLightActive(true);
     
     // Transmit DMX frame over fiber optic
     await dmxController.transmitFrame(frame);
@@ -130,90 +128,14 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     // Send frame to decoder
     onDMXTransmission?.(frame);
     
+    // Light off after transmission
+    setLightActive(false);
+    
     clearInterval(timerInterval);
     const finalTime = Date.now() - startTime;
     setTransmissionTime(finalTime);
     setIsTimerRunning(false);
     setFrameCount(prev => prev + 1);
-  };
-
-  // REAL MORSE TRANSMISSION - Light beam physics
-  const transmitMorseSequence = async (color: string, number: string) => {
-    const { MORSE_PATTERNS } = await import('../utils/morseTimingConfig');
-    const { MORSE_TIMING } = await import('../utils/morseTimingConfig');
-    
-    // Color transmission
-    const colorLetter = color[0].toUpperCase();
-    const colorPattern = MORSE_PATTERNS[colorLetter];
-    
-    console.log(`🔤 Transmitting color: ${colorLetter} = ${colorPattern}`);
-    await transmitPattern(colorPattern, 'color');
-    
-    // Letter gap
-    console.log(`⚫ Letter gap: ${MORSE_TIMING.LETTER_GAP}ms`);
-    onTransmissionGap?.(MORSE_TIMING.LETTER_GAP);
-    await delay(MORSE_TIMING.LETTER_GAP);
-    
-    // Number transmission
-    for (const digit of number) {
-      const digitPattern = MORSE_PATTERNS[digit];
-      console.log(`🔢 Transmitting digit: ${digit} = ${digitPattern}`);
-      await transmitPattern(digitPattern, 'digit');
-      
-      // Letter gap after each digit
-      console.log(`⚫ Letter gap: ${MORSE_TIMING.LETTER_GAP}ms`);
-      onTransmissionGap?.(MORSE_TIMING.LETTER_GAP);
-      await delay(MORSE_TIMING.LETTER_GAP);
-    }
-    
-    // Confirmation flash
-    console.log(`✅ Confirmation flash: ${MORSE_TIMING.CONFIRMATION_FLASH}ms`);
-    setLightActive(true);
-    onTransmissionPulse?.(MORSE_TIMING.CONFIRMATION_FLASH);
-    await delay(MORSE_TIMING.CONFIRMATION_FLASH);
-    setLightActive(false);
-    
-    // End transmission gap
-    console.log(`⚫ End transmission: ${MORSE_TIMING.END_TRANSMISSION_GAP}ms`);
-    onTransmissionGap?.(MORSE_TIMING.END_TRANSMISSION_GAP);
-    await delay(MORSE_TIMING.END_TRANSMISSION_GAP);
-  };
-
-  // Transmit individual Morse pattern
-  const transmitPattern = async (pattern: string, type: string) => {
-    const { MORSE_TIMING } = await import('../utils/morseTimingConfig');
-    
-    for (let i = 0; i < pattern.length; i++) {
-      const symbol = pattern[i];
-      
-      if (symbol === '·') {
-        // DOT - Light on
-        console.log(`💡 DOT: ${MORSE_TIMING.DOT_DURATION}ms`);
-        setLightActive(true);
-        onTransmissionPulse?.(MORSE_TIMING.DOT_DURATION);
-        await delay(MORSE_TIMING.DOT_DURATION);
-        setLightActive(false);
-      } else if (symbol === '−') {
-        // DASH - Light on
-        console.log(`💡 DASH: ${MORSE_TIMING.DASH_DURATION}ms`);
-        setLightActive(true);
-        onTransmissionPulse?.(MORSE_TIMING.DASH_DURATION);
-        await delay(MORSE_TIMING.DASH_DURATION);
-        setLightActive(false);
-      }
-      
-      // Symbol gap (except after last symbol)
-      if (i < pattern.length - 1) {
-        console.log(`⚫ Symbol gap: ${MORSE_TIMING.SYMBOL_GAP}ms`);
-        onTransmissionGap?.(MORSE_TIMING.SYMBOL_GAP);
-        await delay(MORSE_TIMING.SYMBOL_GAP);
-      }
-    }
-  };
-
-  // Precise timing delay
-  const delay = (ms: number): Promise<void> => {
-    return new Promise(resolve => setTimeout(resolve, ms));
   };
 
   const handleSend = async () => {
@@ -229,10 +151,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       
       // Execute DMX transmission
       await executeDMXTransmission(selectedColor, currentNumber);
-      
-      // Add to history
-      const historyEntry = `${new Date().toLocaleTimeString()} - ${selectedColor} ${currentNumber}`;
-      setSentHistory(prev => [historyEntry, ...prev.slice(0, 4)]);
       
       // Reset after successful transmission
       setTimeout(() => {
@@ -251,25 +169,37 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const handleLoop = async () => {
-    if (!selectedColor || !currentNumber || isTransmitting) return;
-
+    if (!selectedColor || !currentNumber || loopActive) return;
+    
     setLoopActive(true);
     loopRef.current = true;
+    
+    // Visual feedback - light on during transmission
     setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
-
+    
     while (loopRef.current) {
-      try {
-        await executeDMXTransmission(selectedColor, currentNumber);
-        
-        // Brief pause between transmissions
-        if (loopRef.current) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      } catch (error) {
-        console.error('Loop transmission error:', error);
-        break;
-      }
+      // Create DMX frame
+      const frame = dmxController.createColorNumberFrame(selectedColor, currentNumber);
+      
+      // Transmit DMX frame over fiber optic
+      await dmxController.transmitFrame(frame);
+      
+      // Send frame to decoder
+      onDMXTransmission?.(frame);
+      
+      // Light off after transmission
+      setLightActive(false);
+
+      setIsTransmitting(false);
+      setLightActive(false);
+      
+      // Wait before next transmission
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
+    
+    setStatusMessage('Select color and number');
+    setCurrentNumber('');
+    setSelectedColor('');
   };
 
   const stopLoopingMorse = () => {
