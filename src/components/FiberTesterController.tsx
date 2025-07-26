@@ -395,7 +395,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
               key={index}
               onClick={() => handleNumberInput(num)}
               disabled={isTransmitting || loopActive || !num}
-              className={`relative h-28 w-28 rounded-2xl bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 hover:from-slate-100 hover:to-slate-200
+              className={`relative h-28 rounded-2xl bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 hover:from-slate-100 hover:to-slate-200
                 border-2 border-slate-400 shadow-2xl transform transition-all duration-300
                 hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
                 ${!num ? 'invisible' : ''}`}
@@ -423,7 +423,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
           <button
             onClick={handleClear}
             disabled={false}
-            className={`relative flex items-center justify-center gap-3 h-28 w-28 overflow-hidden
+            className={`relative flex items-center justify-center gap-3 h-28 overflow-hidden
               ${loopActive ? 'bg-gradient-to-br from-red-700 to-red-800 border-red-400 animate-pulse shadow-red-500/25' : 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-red-600/25'}
               text-white rounded-2xl border-2 border-red-500 transition-all duration-300 shadow-2xl
               hover:scale-105 hover:shadow-2xl active:scale-95 font-light tracking-wide`}
@@ -439,7 +439,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
           <button
             onClick={handleSend}
             disabled={!selectedColor || !currentNumber || loopActive}
-            className="relative flex items-center justify-center gap-3 h-28 w-28 bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600
+            className="relative flex items-center justify-center gap-3 h-28 bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600
               text-white rounded-2xl border-2 border-emerald-500 transition-all duration-300 shadow-2xl shadow-emerald-600/25
               hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-light tracking-wide overflow-hidden"
           >
@@ -454,7 +454,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
           <button
             onClick={handleLoop}
             disabled={!selectedColor || !currentNumber || loopActive}
-            className={`relative flex items-center justify-center gap-3 h-28 w-28 text-white rounded-2xl border-2 transition-all duration-300 shadow-2xl
+            className={`relative flex items-center justify-center gap-3 h-28 text-white rounded-2xl border-2 transition-all duration-300 shadow-2xl
               hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-light tracking-wide overflow-hidden
               bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-500 shadow-blue-600/25`}
           >
