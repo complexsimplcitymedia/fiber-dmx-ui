@@ -19,9 +19,18 @@ const FiberTesterController: React.FC = () => {
 
   // Correct International Morse Code patterns
   const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '·−·',     // Red
-    'G': '−−·',     // Green  
-    'B': '−···',    // Blue
+    'R': '·−·',
+    'E': '·',
+    'D': '−··',
+    'G': '−−·',
+    'R': '·−·',
+    'E': '·',
+    'E': '·',
+    'N': '−·',
+    'B': '−···',
+    'L': '·−··',
+    'U': '··−',
+    'E': '·',
     '0': '−−−−−',
     '1': '·−−−−',
     '2': '··−−−',
@@ -121,26 +130,77 @@ const FiberTesterController: React.FC = () => {
 
   // Complete transmission sequence
   const executeTransmission = async (color: string, number: string) => {
-    // Transmit color
-    const colorLetter = color[0].toUpperCase();
-    const colorPattern = MORSE_PATTERNS[colorLetter];
-    if (colorPattern) {
-      await transmitMorsePattern(colorPattern);
-      await sleep(LETTER_GAP);
+    // Transmit full color word
+    const colorWord = color.toUpperCase();
+    console.log(`Transmitting full color word: ${colorWord}`);
+    
+    for (let i = 0; i < colorWord.length; i++) {
+      if (!loopRef.current && loopActive) break;
+      
+      const letter = colorWord[i];
+      const letterPattern = MORSE_PATTERNS[letter];
+      
+      if (letterPattern) {
+        console.log(`Transmitting letter: ${letter} -> Pattern: ${letterPattern}`);
+        await transmitMorsePattern(letterPattern);
+        
+        // Letter gap between letters in the word (except after last letter)
+        if (i < colorWord.length - 1) {
+          await sleep(LETTER_GAP);
+        }
+      }
     }
+    
+    // Gap between color word and numbers
+    await sleep(LETTER_GAP);
     
     // Transmit each digit
     for (const digit of number) {
-      if (!loopRef.current && loopActive) break; // Check if loop was stopped
+      if (!loopRef.current && loopActive) break;
       
       const digitPattern = MORSE_PATTERNS[digit];
       if (digitPattern) {
+        console.log(`Transmitting digit: ${digit} -> Pattern: ${digitPattern}`);
         await transmitMorsePattern(digitPattern);
         await sleep(LETTER_GAP);
       }
     }
     
     // Confirmation flash
-   await flashLight(CONFIRMATION_FLASH);
-  }
+    await flashLight(CONFIRMATION_FLASH);
+  };
+
+  const handleSend = async () => {
+    if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
+
+    setIsTransmitting(true);
+    setStatusMessage(`Transmitting ${selectedColor} ${currentNumber}...`);
+
+    await executeTransmission(selectedColor, currentNumber);
+
+    setIsTransmitting(false);
+    setStatusMessage(`${selectedColor} ${currentNumber} sent`);
+
+    // Reset after delay
+    setTimeout(() => {
+      setCurrentNumber('');
+      setSelectedColor('');
+      setStatusMessage('Select color and number');
+    }, 2000);
+  };
+
+  const handleLoop = async () => {
+    if (!selectedColor || !currentNumber || loopActive) return;
+    
+    setLoopActive(true);
+    loopRef.current = true;
+    setStatusMessage(`Looping ${selectedColor} ${currentNumber}...`);
+    
+    while (loopRef.current) {
+      setIsTransmitting(true);
+      await executeTransmission(selectedColor, currentNumber);
+      setIsTransmitting(false);
+      await sleep(LETTER_GAP);
+    }
+    
 }
