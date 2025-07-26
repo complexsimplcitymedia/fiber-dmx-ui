@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Power, Send, Infinity, Square } from 'lucide-react';
 
 const FiberTesterController: React.FC = () => {
@@ -8,6 +8,30 @@ const FiberTesterController: React.FC = () => {
   const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [loopActive, setLoopActive] = useState<boolean>(false);
+  const [loopRunning, setLoopRunning] = useState<boolean>(false);
+
+  // Perfect timing constants - EXACT from your table
+  const DOT_DURATION = 120;      // 120ms exactly
+  const DASH_DURATION = 360;     // 360ms exactly  
+  const SYMBOL_GAP = 120;        // 120ms exactly
+  const LETTER_GAP = 840;        // 840ms exactly
+
+  // Correct International Morse Code patterns
+  const MORSE_PATTERNS: { [key: string]: string } = {
+    'R': '·−·',     // Red
+    'G': '−−·',     // Green  
+    'B': '−···',    // Blue
+    '0': '−−−−−',
+    '1': '·−−−−',
+    '2': '··−−−',
+    '3': '···−−',
+    '4': '····−',
+    '5': '·····',
+    '6': '−····',
+    '7': '−−···',
+    '8': '−−−··',
+    '9': '−−−−·'
+  };
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-gradient-to-br from-red-500 to-red-700', hoverColor: 'hover:from-red-400 hover:to-red-600', textColor: 'text-white' },
@@ -16,63 +40,6 @@ const FiberTesterController: React.FC = () => {
   ];
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
-
-  // Calculate total transmission time
-  const calculateTransmissionTime = (color: string, number: string): number => {
-    const colorLetter = color[0].toUpperCase();
-    const colorPattern = MORSE_PATTERNS[colorLetter];
-    let totalTime = 0;
-    
-    // Add color pattern time
-    if (colorPattern) {
-      for (let i = 0; i < colorPattern.length; i++) {
-        const symbol = colorPattern[i];
-        if (symbol === '·') totalTime += DOT_DURATION;
-        else if (symbol === '−') totalTime += DASH_DURATION;
-        if (i < colorPattern.length - 1) totalTime += SYMBOL_GAP;
-      }
-      totalTime += LETTER_GAP;
-    }
-    
-    // Add number patterns time
-    for (const digit of number) {
-      const digitPattern = MORSE_PATTERNS[digit];
-      if (digitPattern) {
-        for (let i = 0; i < digitPattern.length; i++) {
-          const symbol = digitPattern[i];
-          if (symbol === '·') totalTime += DOT_DURATION;
-          else if (symbol === '−') totalTime += DASH_DURATION;
-          if (i < digitPattern.length - 1) totalTime += SYMBOL_GAP;
-        }
-        totalTime += LETTER_GAP;
-      }
-    }
-    
-    return totalTime;
-  };
-
-  // Morse code patterns
-  const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '·−·',     // Red - dot dash dot
-    'G': '−−·',     // Green - dash dash dot  
-    'B': '−···',    // Blue - dash dot dot dot
-    '0': '−−−−−',   // dash dash dash dash dash
-    '1': '·−−−−',   // dot dash dash dash dash
-    '2': '··−−−',   // dot dot dash dash dash
-    '3': '···−−',   // dot dot dot dash dash
-    '4': '····−',   // dot dot dot dot dash
-    '5': '·····',   // dot dot dot dot dot
-    '6': '−····',   // dash dot dot dot dot
-    '7': '−−···',   // dash dash dot dot dot
-    '8': '−−−··',   // dash dash dash dot dot
-    '9': '−−−−·'    // dash dash dash dash dot
-  };
-
-  // Perfect timing constants
-  const DOT_DURATION = 120;
-  const DASH_DURATION = 360;
-  const SYMBOL_GAP = 120;
-  const LETTER_GAP = 840;
 
   // Get light colors based on selected color
   const getLightColors = () => {
@@ -109,59 +76,69 @@ const FiberTesterController: React.FC = () => {
   };
 
   const handleClear = () => {
-    // Always stop loop first if active
+    // Stop everything immediately
     setLoopActive(false);
+    setLoopRunning(false);
     setIsTransmitting(false);
     setLightActive(false);
     
     // Clear selections
-    setTimeout(() => {
-      setCurrentNumber('');
-      setSelectedColor('');
-      setStatusMessage('Select color and number');
-    }, 100); // Small delay to ensure loop stops first
+    setCurrentNumber('');
+    setSelectedColor('');
+    setStatusMessage('Select color and number');
   };
 
-  // Flash light for Morse pattern
-  const flashMorsePattern = async (pattern: string) => {
+  // Sleep function
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Flash light for specific duration
+  const flashLight = async (duration: number) => {
+    if (!loopRunning && loopActive) return; // Stop if loop was cancelled
+    setLightActive(true);
+    await sleep(duration);
+    setLightActive(false);
+  };
+
+  // Transmit single Morse pattern
+  const transmitMorsePattern = async (pattern: string) => {
     for (let i = 0; i < pattern.length; i++) {
+      if (!loopRunning && loopActive) return; // Stop if loop was cancelled
+      
       const symbol = pattern[i];
       
       if (symbol === '·') {
-        // Dot: light ON for 120ms
-        setLightActive(true);
-        await new Promise(resolve => setTimeout(resolve, DOT_DURATION));
-        setLightActive(false);
+        await flashLight(DOT_DURATION);
       } else if (symbol === '−') {
-        // Dash: light ON for 360ms
-        setLightActive(true);
-        await new Promise(resolve => setTimeout(resolve, DASH_DURATION));
-        setLightActive(false);
+        await flashLight(DASH_DURATION);
       }
       
-      // Symbol gap (except after last symbol)
+      // Symbol gap between dots/dashes (except after last symbol)
       if (i < pattern.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, SYMBOL_GAP));
+        await sleep(SYMBOL_GAP);
       }
     }
   };
 
-  // Execute complete Morse transmission
-  const executeMorseTransmission = async (color: string, number: string) => {
-    // Flash color pattern
-    const colorLetter = color[0].toUpperCase(); // R, G, or B only
+  // Complete transmission sequence
+  const executeTransmission = async (color: string, number: string) => {
+    // Transmit color letter
+    const colorLetter = color[0].toUpperCase();
     const colorPattern = MORSE_PATTERNS[colorLetter];
     if (colorPattern) {
-      await flashMorsePattern(colorPattern);
-      await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
+      await transmitMorsePattern(colorPattern);
+      await sleep(LETTER_GAP); // Gap after color
     }
     
-    // Flash number patterns
-    for (const digit of number) {
+    // Transmit each digit
+    for (let i = 0; i < number.length; i++) {
+      if (!loopRunning && loopActive) return; // Stop if loop was cancelled
+      
+      const digit = number[i];
       const digitPattern = MORSE_PATTERNS[digit];
       if (digitPattern) {
-        await flashMorsePattern(digitPattern);
-        await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
+        await transmitMorsePattern(digitPattern);
+        // Gap after each digit (including the last one)
+        await sleep(LETTER_GAP);
       }
     }
   };
@@ -169,14 +146,11 @@ const FiberTesterController: React.FC = () => {
   const handleSend = async () => {
     if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
 
-    // Calculate timing for display
-    const totalTime = calculateTransmissionTime(selectedColor, currentNumber);
-    
     setIsTransmitting(true);
-    setStatusMessage(`Transmitting ${selectedColor} ${currentNumber}... (${totalTime}ms)`);
+    setStatusMessage(`Transmitting ${selectedColor} ${currentNumber}...`);
 
     try {
-      await executeMorseTransmission(selectedColor, currentNumber);
+      await executeTransmission(selectedColor, currentNumber);
       setStatusMessage(`${selectedColor} ${currentNumber} sent`);
       
       // Reset after transmission
@@ -198,37 +172,39 @@ const FiberTesterController: React.FC = () => {
     if (!selectedColor || !currentNumber || loopActive) return;
     
     setLoopActive(true);
-    const totalTime = calculateTransmissionTime(selectedColor, currentNumber);
-    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber}... (${totalTime}ms per cycle)`);
+    setLoopRunning(true);
+    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber}...`);
     
-    // Use a separate function to handle the loop to avoid closure issues
-    const runLoop = async () => {
-      while (loopActive) {
+    try {
+      while (loopRunning) {
         setIsTransmitting(true);
-        await executeMorseTransmission(selectedColor, currentNumber);
+        await executeTransmission(selectedColor, currentNumber);
         setIsTransmitting(false);
         
-        // Brief pause between loops
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Brief pause between transmissions
+        await sleep(500);
         
-        // Check if loop was stopped during the pause
-        if (!loopActive) break;
+        // Check if loop was stopped
+        if (!loopRunning) break;
       }
-    };
-    
-    runLoop().catch(error => {
+    } catch (error) {
       console.error('Loop error:', error);
+    } finally {
       setLoopActive(false);
+      setLoopRunning(false);
       setIsTransmitting(false);
       setLightActive(false);
-    });
+    }
   };
 
   // Effect to handle loop state changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!loopActive) {
+      setLoopRunning(false);
       setIsTransmitting(false);
       setLightActive(false);
+    } else {
+      setLoopRunning(true);
     }
   }, [loopActive]);
 
