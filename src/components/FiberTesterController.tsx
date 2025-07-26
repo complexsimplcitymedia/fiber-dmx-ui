@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Power, Send, Infinity, Square } from 'lucide-react';
-import DMXController, { DMXFrame } from '../utils/dmxProtocol';
+import PythonBridge from '../utils/pythonBridge';
 import TimecodeDisplay from './TimecodeDisplay';
 import TimecodeSync from '../utils/timecodeSync';
 
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
-  onDMXTransmission?: (frame: DMXFrame) => void;
+  onMorseTransmission?: (color: string, number: string, sequence: any[]) => void;
   onTransmissionPulse?: (duration: number) => void;
   onTransmissionGap?: (duration: number) => void;
 }
 
 const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
   onTransmissionChange, 
-  onDMXTransmission,
+  onMorseTransmission,
   onTransmissionPulse,
   onTransmissionGap
 }) => {
@@ -23,7 +23,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
-  const [dmxController] = useState(() => DMXController.getInstance());
+  const [pythonBridge] = useState(() => PythonBridge.getInstance());
   const [loopActive, setLoopActive] = useState<boolean>(false);
   const [loopRef] = useState({ current: false });
   const [transmissionTime, setTransmissionTime] = useState<number>(0);
@@ -108,15 +108,15 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     }
   };
 
-  const executeDMXTransmission = async (color: string, number: string) => {
+  const executeMorseTransmission = async (color: string, number: string) => {
     const startTime = Date.now();
     setIsTimerRunning(true);
     setTransmissionTime(0);
     
-    // Create DMX frame
-    const frame = dmxController.createColorNumberFrame(color, number);
-    console.log(`🚀 DMX-512 Transmission: ${color} ${number}`);
-    console.log(`📡 Frame ${frame.frameNumber}: Channels 1-5 =`, frame.channels.slice(0, 5));
+    // Prepare Morse transmission
+    const response = await pythonBridge.prepareTransmission(color, number);
+    console.log(`🚀 Morse Transmission: ${color} ${number}`);
+    console.log(`📡 Sequence:`, response.sequence);
     
     // Update timer during transmission
     const timerInterval = setInterval(() => {
@@ -126,11 +126,21 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     // Visual feedback - light on during transmission
     setLightActive(true);
     
-    // Transmit DMX frame over fiber optic
-    await dmxController.transmitFrame(frame);
+    // Execute Morse sequence
+    if (response.sequence) {
+      for (const step of response.sequence) {
+        if (step.type === 'dot' || step.type === 'dash') {
+          onTransmissionPulse?.(step.duration);
+          await new Promise(resolve => setTimeout(resolve, step.duration));
+        } else if (step.type === 'gap') {
+          onTransmissionGap?.(step.duration);
+          await new Promise(resolve => setTimeout(resolve, step.duration));
+        }
+      }
+    }
     
-    // Send frame to decoder
-    onDMXTransmission?.(frame);
+    // Send to decoder
+    onMorseTransmission?.(color, number, response.sequence || []);
     
     // Light off after transmission
     setLightActive(false);
@@ -151,10 +161,10 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     setIsTransmitting(true);
 
     try {
-      setStatusMessage(`Transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
+      setStatusMessage(`Transmitting ${selectedColor} ${currentNumber} via Morse...`);
       
-      // Execute DMX transmission
-      await executeDMXTransmission(selectedColor, currentNumber);
+      // Execute Morse transmission
+      await executeMorseTransmission(selectedColor, currentNumber);
       
       // Reset after successful transmission
       setTimeout(() => {
@@ -165,7 +175,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       }, 2000);
 
     } catch (error) {
-      setStatusMessage(`DMX transmission failed: ${error}`);
+      setStatusMessage(`Morse transmission failed: ${error}`);
     } finally {
       setIsTransmitting(false);
       setLightActive(false);
@@ -179,17 +189,11 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     loopRef.current = true;
     
     // Visual feedback - light on during transmission
-    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
+    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via Morse...`);
     
     while (loopRef.current) {
-      // Create DMX frame
-      const frame = dmxController.createColorNumberFrame(selectedColor, currentNumber);
-      
-      // Transmit DMX frame over fiber optic
-      await dmxController.transmitFrame(frame);
-      
-      // Send frame to decoder
-      onDMXTransmission?.(frame);
+      // Execute Morse transmission
+      await executeMorseTransmission(selectedColor, currentNumber);
       
       // Light off after transmission
       setLightActive(false);
@@ -224,10 +228,10 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-light text-transparent bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text mb-4 tracking-wide">
-            DMX-512 Fiber Controller
+            Fiber Optic Controller
           </h1>
           <div className="w-32 h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent mx-auto mb-4"></div>
-          <p className="text-slate-400 font-light tracking-wide">Professional DMX-512 Over Fiber Optic @ 1 Gbps</p>
+          <p className="text-slate-400 font-light tracking-wide">Professional Morse Code Over Fiber Optic</p>
         </div>
 
         {/* Status Light */}
@@ -267,11 +271,11 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
                 {(transmissionTime / 1000).toFixed(2)}s
               </div>
               <div className="retro-digital-text mb-6">
-                Continuously transmitting {selectedColor} {currentNumber} via DMX-512
+                Continuously transmitting {selectedColor} {currentNumber} via Morse
               </div>
               
               <div className="text-lg text-emerald-400 mb-6 font-light">
-                Frame #{frameCount} | Fiber Optic @ 1 Gbps
+                Transmission #{frameCount} | Fiber Optic
               </div>
             </div>
           </div>

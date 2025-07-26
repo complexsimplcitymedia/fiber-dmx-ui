@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import FiberTesterController from './FiberTesterController';
 import DecoderPanel from './DecoderPanel';
-import { DMXFrame } from '../utils/dmxProtocol';
-import DMXDecoder, { DecodedDMXSignal } from '../utils/dmxDecoder';
+import SignalDecoder, { DecodedSignal } from '../utils/signalDecoder';
 
 const SplitScreenController: React.FC = () => {
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
-  const [dmxDecoder] = useState(() => DMXDecoder.getInstance());
+  const [signalDecoder] = useState(() => SignalDecoder.getInstance());
   const [transmissionData, setTransmissionData] = useState<{color: string, number: string, timestamp: number} | null>(null);
   const [currentPulse, setCurrentPulse] = useState<{duration: number, timestamp: number} | null>(null);
   const [currentGap, setCurrentGap] = useState<{duration: number, timestamp: number} | null>(null);
 
-  // LIGHT BEAM PHYSICS - Direct transmission from left to right
-  const handleDMXTransmission = (frame: DMXFrame) => {
-    console.log('🚀 LIGHT BEAM TRANSMITTED:', frame);
+  // LIGHT BEAM PHYSICS - Direct Morse transmission from left to right
+  const handleMorseTransmission = (color: string, number: string, sequence: any[]) => {
+    console.log('🚀 LIGHT BEAM TRANSMITTED:', color, number);
     
-    // Light beam hits the decoder - instant at light speed
-    const decodedSignal = dmxDecoder.receiveFrame(frame);
+    // Simulate the complete transmission for decoder
+    const decodedSignal = signalDecoder.simulateTransmission(color, number);
     
     if (decodedSignal) {
       console.log('📡 LIGHT BEAM RECEIVED:', decodedSignal);
@@ -49,7 +48,7 @@ const SplitScreenController: React.FC = () => {
       <div className="w-1/2 border-r border-slate-600">
         <FiberTesterController
           onTransmissionChange={setIsTransmitting}
-          onDMXTransmission={handleDMXTransmission}
+          onMorseTransmission={handleMorseTransmission}
           onTransmissionPulse={handleTransmissionPulse}
           onTransmissionGap={handleTransmissionGap}
         />
