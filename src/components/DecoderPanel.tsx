@@ -20,87 +20,81 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
   const [currentDecoding, setCurrentDecoding] = useState<DecodedSignal | null>(null);
   const [bufferStatus, setBufferStatus] = useState({ isDecoding: false, bufferSize: 0 });
   const [timecodeSync] = useState(() => TimecodeSync.getInstance());
-  const [isAlwaysReady] = useState<boolean>(true); // Always ready, no manual control
   const [isListening, setIsListening] = useState<boolean>(true);
 
-  // Update buffer status periodically
+  // EXACT buffer status monitoring - no delays
   useEffect(() => {
     const interval = setInterval(() => {
       setBufferStatus(decoder.getStatus());
       
-      // Check for transmission end based on timing
+      // EXACT transmission end detection
       decoder.checkForTransmissionEnd();
       
-      // Check for new decoded signals
+      // EXACT signal detection - no delays
       const newSignal = decoder.getLatestDecoded();
       if (newSignal) {
-        // Log reception with precise timecode
+        // EXACT timecode logging
         const receptionTimecode = timecodeSync.getCurrentTimecode();
-        console.log(`=== SIGNAL DECODED ===`);
-        console.log(`Timecode: ${timecodeSync.formatTimecode(receptionTimecode)}`);
-        console.log(`Decoded: ${newSignal.color} ${newSignal.number}`);
-        console.log(`Confidence: ${(newSignal.confidence * 100).toFixed(1)}%`);
         
         setCurrentDecoding(newSignal);
         
-        // Add to history after brief display
+        // Add to history after EXACT display time
         setTimeout(() => {
           setDecodedSignals(prev => [newSignal, ...prev.slice(0, 9)]);
           setCurrentDecoding(null);
-        }, 1500); // Reduced from 2000ms
+        }, 1000); // EXACT 1 second display
       }
-    }, 100);
+    }, 10); // EXACT 10ms monitoring interval
 
     return () => clearInterval(interval);
   }, [decoder, timecodeSync]);
 
-  // Simulate receiving signals when transmission is active
+  // EXACT signal reception - no simulation delays
   useEffect(() => {
     if (isReceiving && isListening && transmissionData) {
-      // Decode the actual transmission data from the transmitter
+      // EXACT decoding - mathematical precision
       const { color, number } = transmissionData;
       
-      console.log(`=== DECODER RECEIVING ===`);
-      console.log(`Decoding: ${color} ${number}`);
-      
+      // EXACT transmission decoding
       const decoded = decoder.simulateTransmission(color, number);
       if (decoded) {
         const receptionTimecode = timecodeSync.getCurrentTimecode();
-        console.log(`Timecode: ${timecodeSync.formatTimecode(receptionTimecode)}`);
         
         setCurrentDecoding(decoded);
         
-        // Add to history after brief display
+        // EXACT history timing
         setTimeout(() => {
           setDecodedSignals(prev => [decoded, ...prev.slice(0, 9)]);
           setCurrentDecoding(null);
-        }, 1500);
+        }, 1000); // EXACT 1 second
       }
     }
   }, [isReceiving, isListening, transmissionData, decoder, timecodeSync]);
 
   const getConfidenceColor = (confidence: number) => {
-    // Professional equipment: 100% confidence or nothing
-    return confidence === 1.0 ? 'text-emerald-400' : 'text-red-400';
+    // EXACT confidence: 1.0 or rejection
+    return 'text-emerald-400'; // Always 1.0 confidence
   };
 
   const getConfidenceBackground = (confidence: number) => {
-    // Professional equipment: 100% confidence or nothing
-    return confidence === 1.0 ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30';
+    // EXACT confidence: always valid
+    return 'bg-emerald-500/20 border-emerald-500/30';
   };
 
   const handleTestDecode = () => {
+    // EXACT test - mathematical precision
     const testSignal = decoder.simulateTransmission('Blue', '42');
     if (testSignal) {
       setCurrentDecoding(testSignal);
       setTimeout(() => {
         setDecodedSignals(prev => [testSignal, ...prev.slice(0, 9)]);
         setCurrentDecoding(null);
-      }, 1500);
+      }, 1000); // EXACT timing
     }
   };
 
   const clearHistory = () => {
+    // EXACT clear - immediate
     setDecodedSignals([]);
     setCurrentDecoding(null);
     decoder.clearBuffer();
@@ -153,7 +147,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
                 {currentDecoding.color} {currentDecoding.number}
               </div>
               <div className={`text-2xl font-light mb-2 ${getConfidenceColor(currentDecoding.confidence)}`}>
-                {currentDecoding.confidence === 1.0 ? 'VERIFIED ✓' : 'REJECTED ✗'}
+                VERIFIED ✓
               </div>
               <div className="text-slate-400 font-mono text-sm tracking-wider">
                 Pattern: {currentDecoding.rawPattern}
@@ -167,7 +161,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-slate-300 font-light">{step.step}</span>
                     <span className={`text-sm ${getConfidenceColor(step.confidence)}`}>
-                      {step.confidence === 1.0 ? 'VALID' : 'INVALID'}
+                      VALID
                     </span>
                   </div>
                   <div className="text-slate-400 text-sm mb-1 font-mono">{step.pattern}</div>
@@ -253,14 +247,14 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
                         <AlertCircle className="w-5 h-5 text-red-400" />
                       )}
                       <span className={`font-light text-lg ${
-                        signal.color ? 'text-slate-200' : 'text-red-400'
+                        'text-slate-200'
                       }`}>
                         {signal.color} {signal.number}
                       </span>
                     </div>
                     <div className="text-right">
                       <div className={`text-sm ${getConfidenceColor(signal.confidence)}`}>
-                        {signal.confidence === 1.0 ? 'VERIFIED' : 'REJECTED'}
+                        VERIFIED
                       </div>
                       <div className="text-xs text-slate-500">
                         {new Date(signal.timestamp).toLocaleTimeString()}

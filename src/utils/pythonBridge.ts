@@ -1,6 +1,6 @@
 /**
- * Python Bridge - Interface between React frontend and Python backend
- * Handles communication with the Python fiber tester logic
+ * Python Bridge - EXACT MATHEMATICAL INTERFACE
+ * Zero delays, zero probability, exact science only
  */
 import { MORSE_TIMING, MORSE_PATTERNS } from './morseTimingConfig';
 
@@ -38,32 +38,18 @@ class PythonBridge {
   }
   
   /**
-   * Execute Python command and return parsed result
+   * Execute Python command - EXACT MATHEMATICAL LOGIC
    */
   private async executePythonCommand(command: string, args: string[] = []): Promise<PythonResponse> {
-    try {
-      // In a real environment, this would call the Python script
-      // For WebContainer, we'll simulate the Python logic in TypeScript
-      return await this.simulatePythonLogic(command, args);
-    } catch (error) {
-      return {
-        success: false,
-        message: `Python execution error: ${error}`,
-        status: 'error'
-      };
-    }
+    // EXACT simulation - no delays, no errors, mathematical precision
+    return this.simulatePythonLogic(command, args);
   }
   
   /**
-   * Simulate Python logic in TypeScript for WebContainer compatibility
+   * Simulate Python logic - EXACT MATHEMATICAL IMPLEMENTATION
    */
-  private async simulatePythonLogic(command: string, args: string[]): Promise<PythonResponse> {
-    // Use shared timing constants for perfect sync
+  private simulatePythonLogic(command: string, args: string[]): PythonResponse {
     const { DOT_DURATION, DASH_DURATION, SYMBOL_GAP, LETTER_GAP, CONFIRMATION_FLASH, END_TRANSMISSION_GAP } = MORSE_TIMING;
-    
-    console.log('=== MORSE CODE DEBUG ===');
-    console.log('Morse patterns:', MORSE_PATTERNS);
-    console.log('Timings - DOT:', DOT_DURATION, 'DASH:', DASH_DURATION, 'SYMBOL_GAP:', SYMBOL_GAP, 'LETTER_GAP:', LETTER_GAP);
     
     switch (command) {
       case 'set_color':
@@ -111,13 +97,12 @@ class PythonBridge {
           };
         }
         
-        // Generate transmission sequence
+        // Generate EXACT transmission sequence - mathematical precision
         const sequence: TransmissionStep[] = [];
         
-        // Add color transmission
+        // Add color transmission - EXACT
         const colorLetter = selectedColor[0].toUpperCase();
         const colorPattern = MORSE_PATTERNS[colorLetter];
-        console.log(`Color: ${selectedColor} -> Letter: ${colorLetter} -> Pattern: ${colorPattern}`);
         sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
         sequence.push({
           type: 'gap',
@@ -125,10 +110,9 @@ class PythonBridge {
           description: 'Letter gap'
         });
         
-        // Add number transmission
+        // Add number transmission - EXACT
         for (const digit of selectedNumber) {
           const digitPattern = MORSE_PATTERNS[digit];
-          console.log(`Digit: ${digit} -> Pattern: ${digitPattern}`);
           sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
           sequence.push({
             type: 'gap',
@@ -137,20 +121,21 @@ class PythonBridge {
           });
         }
         
-        // Add confirmation flash
+        // Add confirmation flash - EXACT
         sequence.push({
           type: 'confirmation',
           duration: CONFIRMATION_FLASH,
           description: 'Confirmation flash'
         });
         
-        // Add end-of-transmission gap - CRITICAL for decoder sync
+        // Add end-of-transmission gap - EXACT
         sequence.push({
           type: 'gap',
           duration: END_TRANSMISSION_GAP,
           description: 'End of transmission'
         });
         
+        // EXACT mathematical calculation - no approximation
         const totalDuration = sequence.reduce((sum, step) => sum + step.duration, 0);
         
         return {
@@ -187,6 +172,9 @@ class PythonBridge {
     }
   }
   
+  /**
+   * Convert pattern to sequence - EXACT MATHEMATICAL CONVERSION
+   */
   private patternToSequence(
     pattern: string, 
     seqType: string, 
@@ -197,13 +185,10 @@ class PythonBridge {
   ): TransmissionStep[] {
     const sequence: TransmissionStep[] = [];
     
-    console.log(`Converting pattern "${pattern}" for ${seqType} "${value}"`);
-    
     for (let i = 0; i < pattern.length; i++) {
       const symbol = pattern[i];
       
       if (symbol === '·') {
-        console.log(`  Adding DOT: ${dotDuration}ms`);
         sequence.push({
           type: 'dot',
           duration: dotDuration,
@@ -212,7 +197,6 @@ class PythonBridge {
           description: `Dot (${seqType})`
         });
       } else if (symbol === '−') {
-        console.log(`  Adding DASH: ${dashDuration}ms`);
         sequence.push({
           type: 'dash',
           duration: dashDuration,
@@ -222,9 +206,8 @@ class PythonBridge {
         });
       }
       
-      // Add symbol gap (except after last symbol)
+      // Add symbol gap - EXACT (except after last symbol)
       if (i < pattern.length - 1) {
-        console.log(`  Adding SYMBOL_GAP: ${symbolGap}ms`);
         sequence.push({
           type: 'gap',
           duration: symbolGap,
@@ -233,51 +216,32 @@ class PythonBridge {
       }
     }
     
-    console.log(`Final sequence for "${pattern}":`, sequence.map(s => `${s.type}(${s.duration}ms)`).join(' -> '));
-    
     return sequence;
   }
   
-  /**
-   * Set the selected color
-   */
+  // Public interface methods - EXACT
   public async setColor(color: string): Promise<PythonResponse> {
-    return await this.executePythonCommand('set_color', [color]);
+    return this.executePythonCommand('set_color', [color]);
   }
   
-  /**
-   * Set the number for transmission
-   */
   public async setNumber(number: string): Promise<PythonResponse> {
-    return await this.executePythonCommand('set_number', [number]);
+    return this.executePythonCommand('set_number', [number]);
   }
   
-  /**
-   * Prepare transmission and get sequence
-   */
   public async prepareTransmission(color: string, number: string): Promise<PythonResponse> {
-    return await this.executePythonCommand('prepare', [color, number]);
+    return this.executePythonCommand('prepare', [color, number]);
   }
   
-  /**
-   * Complete transmission
-   */
   public async completeTransmission(color: string, number: string): Promise<PythonResponse> {
-    return await this.executePythonCommand('complete', [color, number]);
+    return this.executePythonCommand('complete', [color, number]);
   }
   
-  /**
-   * Clear current selection
-   */
   public async clearSelection(): Promise<PythonResponse> {
-    return await this.executePythonCommand('clear');
+    return this.executePythonCommand('clear');
   }
   
-  /**
-   * Get current system status
-   */
   public async getStatus(): Promise<PythonResponse> {
-    return await this.executePythonCommand('status');
+    return this.executePythonCommand('status');
   }
 }
 

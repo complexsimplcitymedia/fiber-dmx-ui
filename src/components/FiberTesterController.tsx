@@ -121,60 +121,50 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     setIsTimerRunning(true);
     setTransmissionTime(0);
     
-    // Calculate expected duration
+    // Calculate EXACT expected duration - mathematical precision
     const totalExpected = sequence.reduce((sum, step) => sum + step.duration, 0);
     setExpectedDuration(totalExpected);
     
-    // Update timer every 10ms during transmission
+    // Update timer every 1ms for EXACT precision
     const timerInterval = setInterval(() => {
       setTransmissionTime(Date.now() - startTime);
-    }, 10);
+    }, 1);
     
     for (const step of sequence) {
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-        // Turn on the light
+        // Turn on light - EXACT timing
         setLightActive(true);
         
+        // EXACT timing - no delays, no approximation
         await new Promise(resolve => setTimeout(resolve, step.duration));
         
-        // Turn off the light
+        // Turn off light - EXACT timing
         setLightActive(false);
-        
-        // Add small gap after light unless it's the last step
-        if (step !== sequence[sequence.length - 1]) {
-          await new Promise(resolve => setTimeout(resolve, 33));
-        }
       } else if (step.type === 'gap') {
+        // EXACT gap timing - no approximation
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }
     }
     
     clearInterval(timerInterval);
+    // EXACT final time calculation
     const finalTime = Date.now() - startTime;
     setTransmissionTime(finalTime);
     setIsTimerRunning(false);
   };
 
-  const delay = (ms: number): Promise<void> => {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  };
-
   const handleSend = async () => {
     if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
 
-    // Mark transmission start with precise timecode
+    // Mark transmission start with EXACT timecode
     const transmissionStart = timecodeSync.markTransmissionStart();
-    console.log(`=== TRANSMISSION START ===`);
-    console.log(`Timecode: ${timecodeSync.formatTimecode(transmissionStart.timecode)}`);
-    console.log(`Timestamp: ${transmissionStart.timestamp}`);
-    console.log(`Color: ${selectedColor}, Number: ${currentNumber}`);
 
-    // Notify decoder of transmission data
+    // Notify decoder - EXACT data transfer
     onTransmissionData?.(selectedColor, currentNumber);
     setIsTransmitting(true);
 
     try {
-      // Prepare transmission using Python logic
+      // Prepare transmission - EXACT mathematical logic
       const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
       
       if (!prepareResponse.success || !prepareResponse.sequence) {
@@ -185,10 +175,10 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       
       setStatusMessage(prepareResponse.message);
       
-      // Execute the transmission sequence
+      // Execute EXACT transmission sequence
       await executeTransmissionSequence(prepareResponse.sequence);
       
-      // Complete transmission
+      // Complete transmission - EXACT
       const completeResponse = await pythonBridge.completeTransmission(selectedColor, currentNumber);
       
       if (completeResponse.success && completeResponse.history) {
@@ -196,7 +186,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
         setStatusMessage(completeResponse.message);
       }
       
-      // Reset after successful transmission
+      // Reset after EXACT successful transmission
       setTimeout(() => {
         setCurrentNumber('');
         setSelectedColor('');
@@ -214,6 +204,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber || loopActive) return;
+    
+    // EXACT loop timing - no delays
+    if (!selectedColor || !currentNumber || loopActive) return;
     setLoopActive(true);
     setIsTransmitting(true);
     setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
@@ -224,11 +217,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
     while (loopRef.current) {
       try {
-        // Reset timer for each loop cycle
-        console.log('=== Starting new loop cycle ===');
-        // Diagnostic: See if Python is returning what you expect
+        // EXACT loop cycle - mathematical precision
         const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
-        console.log('prepareResponse:', prepareResponse);
 
         if (!prepareResponse.success || !prepareResponse.sequence || prepareResponse.sequence.length === 0) {
           setStatusMessage(prepareResponse.message || 'Invalid sequence');
@@ -238,16 +228,10 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
           break;
         }
 
-        // Diagnostic: Output sequence for every loop
-        console.log('sequence:', prepareResponse.sequence);
-
-        // Actually run the flash sequence
+        // Execute EXACT flash sequence
         await executeTransmissionSequence(prepareResponse.sequence);
 
-        // Diagnostic: Confirm completion of flash
-        console.log('Completed transmission sequence.');
-
-        await delay(250);
+        // No delay between loops - EXACT continuous operation
 
       } catch (error) {
         setStatusMessage(`Loop failed: ${error}`);
@@ -258,7 +242,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       }
     }
 
-    // Reset state at the end
+    // EXACT state reset
     setIsTransmitting(false);
     setLightActive(false);
     setStatusMessage('Select color and number');
@@ -267,6 +251,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const stopLoopingMorse = () => {
+    // EXACT stop - immediate
     loopRef.current = false;
     setLoopActive(false);
     setIsTransmitting(false);
