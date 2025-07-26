@@ -39,7 +39,6 @@ const FiberTesterController: React.FC = () => {
   const DASH_DURATION = 360;
   const SYMBOL_GAP = 120;
   const LETTER_GAP = 840;
-  const CONFIRMATION_FLASH = 1000;
 
   // Get light colors based on selected color
   const getLightColors = () => {
@@ -131,11 +130,6 @@ const FiberTesterController: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
       }
     }
-    
-    // Confirmation flash
-    setLightActive(true);
-    await new Promise(resolve => setTimeout(resolve, CONFIRMATION_FLASH));
-    setLightActive(false);
   };
 
   const handleSend = async () => {
