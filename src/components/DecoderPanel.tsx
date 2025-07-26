@@ -180,39 +180,45 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       <div className="flex gap-4 mb-8">
         <button
           onClick={() => setIsListening(!isListening)}
-          className={`flex items-center justify-center gap-2 w-24 h-24 rounded-lg border-2 transition-all duration-300 font-light tracking-wide ${
+          className={`flex items-center justify-center gap-2 h-28 w-28 rounded-2xl border-2 transition-all duration-300 font-light tracking-wide overflow-hidden ${
             isListening 
               ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-500 text-white shadow-red-600/25' 
               : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border-emerald-500 text-white shadow-emerald-600/25'
-          } shadow-xl hover:scale-105`}
+          } shadow-2xl hover:scale-105`}
         >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
+          <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
           <div className="flex flex-col items-center gap-1">
-            <Activity className="w-6 h-6" />
-            <span className="text-xs">{isListening ? 'PAUSE' : 'LISTEN'}</span>
+            <Activity className="w-10 h-10" />
+            <span className="text-sm">{isListening ? 'PAUSE' : 'LISTEN'}</span>
           </div>
         </button>
         
         <button
           onClick={handleTestDecode}
-          className="flex items-center justify-center gap-2 w-24 h-24 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
-            text-white rounded-lg border-2 border-blue-500 transition-all duration-300 shadow-xl shadow-blue-600/25
-            hover:scale-105 font-light tracking-wide"
+          className="relative flex items-center justify-center gap-2 h-28 w-28 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
+            text-white rounded-2xl border-2 border-blue-500 transition-all duration-300 shadow-2xl shadow-blue-600/25
+            hover:scale-105 font-light tracking-wide overflow-hidden"
         >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
+          <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
           <div className="flex flex-col items-center gap-1">
-            <Zap className="w-6 h-6" />
-            <span className="text-xs">TEST</span>
+            <Zap className="w-10 h-10" />
+            <span className="text-sm">TEST</span>
           </div>
         </button>
         
         <button
           onClick={clearHistory}
-          className="flex items-center justify-center gap-2 w-24 h-24 bg-gradient-to-br from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600
-            text-white rounded-lg border-2 border-slate-500 transition-all duration-300 shadow-xl shadow-slate-600/25
-            hover:scale-105 font-light tracking-wide"
+          className="relative flex items-center justify-center gap-2 h-28 w-28 bg-gradient-to-br from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600
+            text-white rounded-2xl border-2 border-slate-500 transition-all duration-300 shadow-2xl shadow-slate-600/25
+            hover:scale-105 font-light tracking-wide overflow-hidden"
         >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
+          <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
           <div className="flex flex-col items-center gap-1">
-            <RotateCcw className="w-6 h-6" />
-            <span className="text-xs">CLEAR</span>
+            <RotateCcw className="w-10 h-10" />
+            <span className="text-sm">CLEAR</span>
           </div>
         </button>
       </div>
