@@ -142,7 +142,7 @@ const FiberTesterController: React.FC = () => {
     
     // Confirmation flash
     await flashLight(CONFIRMATION_FLASH);
-  }
+  };
 
   // Single transmission handler
   const handleSingleTransmission = async () => {
@@ -323,4 +323,3 @@ const FiberTesterController: React.FC = () => {
 };
 
 export default FiberTesterController;
-}
