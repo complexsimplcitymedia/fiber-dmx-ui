@@ -1,8 +1,8 @@
 import React from 'react';
-import SplitScreenController from './components/SplitScreenController';
+import FiberTesterController from './components/FiberTesterController';
 
 function App() {
-  return <SplitScreenController />;
+  return <FiberTesterController />;
 }
 
 export default App;

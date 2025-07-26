@@ -4,19 +4,7 @@ import PythonBridge from '../utils/pythonBridge';
 import TimecodeDisplay from './TimecodeDisplay';
 import TimecodeSync from '../utils/timecodeSync';
 
-interface FiberTesterControllerProps {
-  onTransmissionChange?: (isTransmitting: boolean) => void;
-  onMorseTransmission?: (color: string, number: string, sequence: any[]) => void;
-  onTransmissionPulse?: (duration: number) => void;
-  onTransmissionGap?: (duration: number) => void;
-}
-
-const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
-  onTransmissionChange, 
-  onMorseTransmission,
-  onTransmissionPulse,
-  onTransmissionGap
-}) => {
+const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
   const [currentNumber, setCurrentNumber] = useState<string>('');
@@ -70,11 +58,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   const lightColors = getLightColors();
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
-
-  // Notify parent component of transmission state changes
-  useEffect(() => {
-    onTransmissionChange?.(isTransmitting || loopActive);
-  }, [isTransmitting, loopActive, onTransmissionChange]);
 
   const handleColorSelect = (color: string) => {
     if (isTransmitting || loopActive) return;
@@ -130,17 +113,12 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     if (response.sequence) {
       for (const step of response.sequence) {
         if (step.type === 'dot' || step.type === 'dash') {
-          onTransmissionPulse?.(step.duration);
           await new Promise(resolve => setTimeout(resolve, step.duration));
         } else if (step.type === 'gap') {
-          onTransmissionGap?.(step.duration);
           await new Promise(resolve => setTimeout(resolve, step.duration));
         }
       }
     }
-    
-    // Send to decoder
-    onMorseTransmission?.(color, number, response.sequence || []);
     
     // Light off after transmission
     setLightActive(false);

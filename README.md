@@ -1,56 +1,45 @@
-# Fiber Optic Communication System - Separated Projects
+# Fiber Optic Transmitter - Perfect Timing
 
-Two separate applications that communicate over different ports for real signal transmission.
+Professional fiber optic Morse code transmitter with GPS-disciplined precision timing.
+
+## Features
+
+- **Perfect Timing**: GPS-disciplined oscillator precision
+- **Morse Code**: International standard patterns
+- **Professional Interface**: Industrial-grade controls
+- **Timecode Sync**: Professional broadcast timekeeping
+- **Loop Mode**: Continuous transmission capability
 
 ## Architecture
 
-- **Transmitter**: React app on Port 3000
-- **Receiver**: React app on Port 3001  
-- **Communication**: Real HTTP requests between ports
+- **Transmitter Only**: Clean, focused implementation
+- **Perfect Timing**: Zero tolerance timing requirements
+- **Morse Patterns**: Exact international standard
+- **Light Control**: Precise pulse/gap generation
 
-## Running the System
+## Running
 
-### Terminal 1 - Transmitter:
 ```bash
-cd transmitter
 npm install
 npm run dev
 # Runs on http://localhost:3000
 ```
 
-### Terminal 2 - Receiver:
-```bash
-cd receiver
-npm install  
-npm run dev
-# Runs on http://localhost:3001
-```
+## Timing Specifications
 
-## How It Works
+- **Dot Duration**: 120ms exactly
+- **Dash Duration**: 360ms exactly  
+- **Symbol Gap**: 120ms exactly
+- **Letter Gap**: 840ms exactly
+- **Confirmation Flash**: 1000ms exactly
+- **End Transmission**: 2000ms exactly
 
-1. **Transmitter (Port 3000)**:
-   - Select color and number
-   - Click SEND to transmit
-   - Sends HTTP POST to `http://localhost:3001/api/receive-signal`
+## Usage
 
-2. **Receiver (Port 3001)**:
-   - Listens for incoming signals
-   - Displays received transmissions
-   - Shows real-time signal history
+1. Select color (Red/Green/Blue)
+2. Enter number (0-100)
+3. Click SEND for single transmission
+4. Click LOOP for continuous transmission
+5. STOP to halt any transmission
 
-## Real Communication
-
-- Actual HTTP requests between ports
-- Real network communication
-- True client-server architecture
-- Demonstrates fiber optic concept with separate endpoints
-
-## Features
-
-- **Professional Interface**: Industrial-grade controls
-- **Real Transmission**: HTTP communication between ports
-- **Signal History**: Track all received transmissions
-- **Status Indicators**: Connection and server status
-- **Loop Mode**: Continuous transmission capability
-
-This setup allows for genuine signal transmission between separate applications, demonstrating the fiber optic communication concept with real network protocols.
+The system generates perfect Morse code timing that external decoders can rely on for accurate signal interpretation.
