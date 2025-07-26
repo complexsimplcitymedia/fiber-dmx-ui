@@ -350,13 +350,15 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
         )}
 
         {/* Status Display */}
-        <div className={`bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-6 mb-8 border border-slate-600 shadow-xl ${loopActive ? 'opacity-50' : ''}`}>
+        <div className={`bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 mb-8 border border-slate-600 shadow-xl ${loopActive ? 'opacity-50' : ''}`}>
           <div className="text-center">
-            <div className="text-xl font-light text-slate-200 mb-3 tracking-wide">{statusMessage}</div>
+            <div className="retro-digital-display mb-4" style={{ fontSize: '2.5rem', lineHeight: '1.4' }}>
+              {statusMessage}
+            </div>
             <div className="text-sm text-slate-400 font-light">
               {(transmissionTime / 1000).toFixed(2)}s
             </div>
-            <div className="text-sm text-slate-400 font-light">
+            <div className="retro-digital-text text-lg text-slate-400 font-light">
               {selectedColor && `Color: ${selectedColor}`}
               {selectedColor && currentNumber && ' | '}
               {currentNumber && `Number: ${currentNumber}`}
