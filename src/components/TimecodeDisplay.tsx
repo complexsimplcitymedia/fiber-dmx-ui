@@ -7,9 +7,14 @@ import TimecodeSync from '../utils/timecodeSync';
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
   onDMXTransmission?: (frame: DMXFrame) => void;
+}
+
 const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
   onTransmissionChange, 
   onDMXTransmission
+}) => {
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
@@ -66,11 +71,23 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   useEffect(() => {
     onTransmissionChange?.(isTransmitting || loopActive);
   }, [isTransmitting, loopActive, onTransmissionChange]);
+
+  const handleColorSelect = (color: string) => {
+    if (isTransmitting || loopActive) return;
+    setSelectedColor(color);
+    setStatusMessage(currentNumber ? `${color} ${currentNumber} ready` : `${color} selected - Enter number`);
+  };
+
+  const handleNumberInput = (num: string) => {
+    if (isTransmitting || loopActive) {
+      if (currentNumber.length < 3) {
+        const newNumber = currentNumber + num;
         setCurrentNumber(newNumber);
         setStatusMessage(selectedColor ? `${selectedColor} ${newNumber} ready` : `Number ${newNumber} set - Select color`);
       }
     }
   };
+
   const handleClear = () => {
     // Stop any looping first
     if (loopActive) {
@@ -78,7 +95,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       return;
     }
     
-    {
+    if (!isTransmitting) {
       setCurrentNumber('');
       setSelectedColor('');
       setStatusMessage('Select color and number');
@@ -93,7 +110,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     // Create DMX frame
     const frame = dmxController.createColorNumberFrame(color, number);
     console.log(`🚀 DMX-512 Transmission: ${color} ${number}`);
-    console.log(`📡 Frame ${frame.frameNumber}: Channels 1-5 =`, frame.channels.slice(0, 5));
     console.log(`📡 Frame ${frame.frameNumber}: Channels 1-5 =`, frame.channels.slice(0, 5));
     
     // Update timer during transmission
@@ -130,6 +146,13 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
     try {
       setStatusMessage(`Transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
+      
+      // Execute DMX transmission
+      await executeDMXTransmission(selectedColor, currentNumber);
+      
+      // Add to history
+      setSentHistory(prev => [`${selectedColor} ${currentNumber}`, ...prev.slice(0, 4)]);
+      
       // Reset after successful transmission
       setTimeout(() => {
         setCurrentNumber('');
@@ -147,27 +170,27 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const handleLoop = async () => {
-    
-    if (!selectedColor || !currentNumber || loopActive) return;
-    // Visual feedback - light on during transmission
-    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
-    
-    // Transmit DMX frame over fiber optic
-    await dmxController.transmitFrame(frame);
-    
-    // Send frame to decoder
-    onDMXTransmission?.(frame);
-    
-    // Light off after transmission
-    setLightActive(false);
+    if (!selectedColor || !currentNumber || isTransmitting) return;
 
-    setIsTransmitting(false);
-    setLightActive(false);
-    setStatusMessage('Select color and number');
-    setCurrentNumber('');
-    setSelectedColor('');
+    setLoopActive(true);
+    loopRef.current = true;
+    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
+
+    while (loopRef.current) {
+      try {
+        // Execute DMX transmission
+        await executeDMXTransmission(selectedColor, currentNumber);
+        
+        // Small delay between transmissions
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error('Loop transmission error:', error);
+        break;
+      }
+    }
   };
 
+  const stopLoopingMorse = () => {
     loopRef.current = false;
     setLoopActive(false);
     setIsTransmitting(false);
@@ -182,8 +205,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       {/* Professional Timecode Display */}
       <TimecodeDisplay label="TX" position="top-left" size="medium" />
       
-      // Execute DMX transmission
-      await executeDMXTransmission(selectedColor, currentNumber);
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-light text-transparent bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text mb-4 tracking-wide">
             DMX-512 Fiber Controller
@@ -234,7 +256,13 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
               
               <div className="text-lg text-emerald-400 mb-6 font-light">
                 Frame #{frameCount} | Fiber Optic @ 1 Gbps
-          
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Display */}
+        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-8 border border-slate-600 shadow-2xl mb-8">
           <div className="text-center">
             <div className="retro-digital-display mb-4" style={{ fontSize: '2.5rem', lineHeight: '1.4' }}>
               {statusMessage}
