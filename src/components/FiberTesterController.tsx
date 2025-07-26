@@ -235,6 +235,57 @@ const FiberTesterController: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Morse Code Translator */}
+          <div className="lg:col-span-2 bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-gray-700 mb-8">
+            <h2 className="text-xl font-semibold text-white mb-4">Morse Code Translator</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg text-blue-400 mb-2">What Will Be Transmitted:</h3>
+                <div className="bg-black/50 rounded-lg p-4 min-h-[100px]">
+                  {selectedColor && currentNumber ? (
+                    <div className="space-y-2">
+                      <div className="text-green-400 font-mono text-lg">
+                        <span className="text-blue-300">Color:</span> {selectedColor[0].toUpperCase()} = {MORSE_PATTERNS[selectedColor[0].toUpperCase()]}
+                      </div>
+                      <div className="text-green-400 font-mono text-lg">
+                        <span className="text-blue-300">Number:</span> {currentNumber.split('').map(digit => `${digit} = ${MORSE_PATTERNS[digit]}`).join(', ')}
+                      </div>
+                      <div className="text-yellow-400 font-mono text-sm mt-3">
+                        <span className="text-blue-300">Full Sequence:</span> {selectedColor[0].toUpperCase()}{currentNumber.split('').join('')} = {MORSE_PATTERNS[selectedColor[0].toUpperCase()]}{currentNumber.split('').map(digit => MORSE_PATTERNS[digit]).join(' ')}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 italic">Select color and number to see Morse translation</div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg text-blue-400 mb-2">Morse Code Reference:</h3>
+                <div className="bg-black/50 rounded-lg p-4 max-h-[200px] overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-red-400">R = ·−·</div>
+                    <div className="text-green-400">G = −−·</div>
+                    <div className="text-blue-400">B = −···</div>
+                    <div className="text-gray-300">0 = −−−−−</div>
+                    <div className="text-gray-300">1 = ·−−−−</div>
+                    <div className="text-gray-300">2 = ··−−−</div>
+                    <div className="text-gray-300">3 = ···−−</div>
+                    <div className="text-gray-300">4 = ····−</div>
+                    <div className="text-gray-300">5 = ·····</div>
+                    <div className="text-gray-300">6 = −····</div>
+                    <div className="text-gray-300">7 = −−···</div>
+                    <div className="text-gray-300">8 = −−−··</div>
+                    <div className="text-gray-300">9 = −−−−·</div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-600 text-xs text-gray-400">
+                    <div>· = Dot (120ms)</div>
+                    <div>− = Dash (360ms)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Color Selection */}
           <div className="bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-semibold text-white mb-4">Select Color</h2>
