@@ -432,7 +432,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
           </div>
         )}
         
-        <div className="flex gap-6 justify-center mb-8">
+        <div className={`grid grid-cols-3 gap-6 mb-8 ${loopActive ? 'opacity-50' : ''}`}>
           <button
             onClick={handleClear}
             disabled={false}

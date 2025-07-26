@@ -104,7 +104,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-6">
       {/* Professional Timecode Display */}
       <TimecodeDisplay label="RX" position="top-right" size="medium" />
       
