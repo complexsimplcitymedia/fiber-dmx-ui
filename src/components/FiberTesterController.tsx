@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Power, Send, RotateCcw, Infinity, Square } from 'lucide-react';
 import PythonBridge, { PythonResponse, TransmissionStep } from '../utils/pythonBridge';
 
-const FiberTesterController: React.FC = () => {
+interface FiberTesterControllerProps {
+  onTransmissionChange?: (isTransmitting: boolean) => void;
+}
+
+const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmissionChange }) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
@@ -56,6 +60,11 @@ const FiberTesterController: React.FC = () => {
   const lightColors = getLightColors();
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
+
+  // Notify parent component of transmission state changes
+  useEffect(() => {
+    onTransmissionChange?.(isTransmitting || loopActive);
+  }, [isTransmitting, loopActive, onTransmissionChange]);
 
   const handleColorSelect = (color: string) => {
     if (!isTransmitting && !loopActive) {

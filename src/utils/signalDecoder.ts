@@ -1,0 +1,441 @@
+/**
+ * Signal Decoder - Decodes Morse code transmissions back to color/number pairs
+ * Handles timing analysis and pattern matching for fiber optic signals
+ */
+
+export interface DecodedSignal {
+  color?: string;
+  number?: string;
+  confidence: number;
+  rawPattern: string;
+  timestamp: number;
+  decodingSteps: DecodingStep[];
+}
+
+export interface DecodingStep {
+  step: string;
+  pattern: string;
+  interpretation: string;
+  confidence: number;
+}
+
+export interface SignalPulse {
+  type: 'pulse' | 'gap';
+  duration: number;
+  timestamp: number;
+}
+
+class SignalDecoder {
+  private static instance: SignalDecoder;
+  
+  // Morse code lookup (reverse of transmission)
+  private readonly morseToChar: { [pattern: string]: string } = {
+    '·−·': 'R',
+    '−−·': 'G', 
+    '−···': 'B',
+    '−−−−−': '0',
+    '·−−−−': '1',
+    '··−−−': '2',
+    '···−−': '3',
+    '····−': '4',
+    '·····': '5',
+    '−····': '6',
+    '−−···': '7',
+    '−−−··': '8',
+    '−−−−·': '9'
+  };
+  
+  // Timing thresholds (with tolerance)
+  private readonly DOT_MIN = 80;
+  private readonly DOT_MAX = 160;
+  private readonly DASH_MIN = 280;
+  private readonly DASH_MAX = 440;
+  private readonly SYMBOL_GAP_MIN = 20;
+  private readonly SYMBOL_GAP_MAX = 60;
+  private readonly LETTER_GAP_MIN = 80;
+  private readonly LETTER_GAP_MAX = 140;
+  
+  private pulseBuffer: SignalPulse[] = [];
+  private isDecoding = false;
+  private decodingTimeout: NodeJS.Timeout | null = null;
+  
+  private constructor() {}
+  
+  public static getInstance(): SignalDecoder {
+    if (!SignalDecoder.instance) {
+      SignalDecoder.instance = new SignalDecoder();
+    }
+    return SignalDecoder.instance;
+  }
+  
+  /**
+   * Process incoming signal pulse
+   */
+  public processPulse(duration: number): void {
+    const pulse: SignalPulse = {
+      type: 'pulse',
+      duration,
+      timestamp: Date.now()
+    };
+    
+    this.pulseBuffer.push(pulse);
+    this.scheduleDecoding();
+  }
+  
+  /**
+   * Process gap between pulses
+   */
+  public processGap(duration: number): void {
+    const gap: SignalPulse = {
+      type: 'gap',
+      duration,
+      timestamp: Date.now()
+    };
+    
+    this.pulseBuffer.push(gap);
+    this.scheduleDecoding();
+  }
+  
+  /**
+   * Schedule decoding attempt after signal appears complete
+   */
+  private scheduleDecoding(): void {
+    if (this.decodingTimeout) {
+      clearTimeout(this.decodingTimeout);
+    }
+    
+    // Wait for signal to complete (no new pulses for 500ms)
+    this.decodingTimeout = setTimeout(() => {
+      this.attemptDecoding();
+    }, 500);
+  }
+  
+  /**
+   * Attempt to decode the current pulse buffer
+   */
+  private attemptDecoding(): DecodedSignal | null {
+    if (this.pulseBuffer.length === 0) return null;
+    
+    const decodingSteps: DecodingStep[] = [];
+    let confidence = 1.0;
+    
+    // Step 1: Convert pulses to morse pattern
+    const { pattern, stepConfidence } = this.pulsesToMorsePattern(this.pulseBuffer);
+    confidence *= stepConfidence;
+    
+    decodingSteps.push({
+      step: 'Pulse Analysis',
+      pattern: pattern,
+      interpretation: `Converted ${this.pulseBuffer.length} pulses to morse pattern`,
+      confidence: stepConfidence
+    });
+    
+    // Step 2: Split pattern into segments (color + digits)
+    const segments = this.splitMorsePattern(pattern);
+    
+    decodingSteps.push({
+      step: 'Pattern Segmentation',
+      pattern: segments.join(' | '),
+      interpretation: `Identified ${segments.length} morse segments`,
+      confidence: segments.length > 0 ? 0.9 : 0.1
+    });
+    
+    if (segments.length === 0) {
+      confidence = 0;
+    }
+    
+    // Step 3: Decode segments
+    const decoded = this.decodeSegments(segments);
+    
+    decodingSteps.push({
+      step: 'Character Decoding',
+      pattern: decoded.chars.join(''),
+      interpretation: `Decoded to: ${decoded.chars.join('')}`,
+      confidence: decoded.confidence
+    });
+    
+    confidence *= decoded.confidence;
+    
+    // Step 4: Interpret as color + number
+    const interpretation = this.interpretMessage(decoded.chars);
+    
+    decodingSteps.push({
+      step: 'Message Interpretation',
+      pattern: interpretation.color + ' ' + interpretation.number,
+      interpretation: `Color: ${interpretation.color}, Number: ${interpretation.number}`,
+      confidence: interpretation.confidence
+    });
+    
+    confidence *= interpretation.confidence;
+    
+    const result: DecodedSignal = {
+      color: interpretation.color,
+      number: interpretation.number,
+      confidence: Math.max(0, Math.min(1, confidence)),
+      rawPattern: pattern,
+      timestamp: Date.now(),
+      decodingSteps
+    };
+    
+    // Clear buffer after decoding
+    this.pulseBuffer = [];
+    
+    return result;
+  }
+  
+  /**
+   * Convert pulse sequence to morse pattern
+   */
+  private pulsesToMorsePattern(pulses: SignalPulse[]): { pattern: string; stepConfidence: number } {
+    let pattern = '';
+    let confidence = 1.0;
+    let confidenceFactors = 0;
+    
+    for (const pulse of pulses) {
+      if (pulse.type === 'pulse') {
+        if (pulse.duration >= this.DOT_MIN && pulse.duration <= this.DOT_MAX) {
+          pattern += '·';
+          confidence *= 0.95; // High confidence for dots
+          confidenceFactors++;
+        } else if (pulse.duration >= this.DASH_MIN && pulse.duration <= this.DASH_MAX) {
+          pattern += '−';
+          confidence *= 0.95; // High confidence for dashes
+          confidenceFactors++;
+        } else {
+          // Ambiguous timing - make best guess
+          if (pulse.duration < (this.DOT_MAX + this.DASH_MIN) / 2) {
+            pattern += '·';
+            confidence *= 0.7; // Lower confidence
+          } else {
+            pattern += '−';
+            confidence *= 0.7; // Lower confidence
+          }
+          confidenceFactors++;
+        }
+      } else if (pulse.type === 'gap') {
+        if (pulse.duration >= this.LETTER_GAP_MIN && pulse.duration <= this.LETTER_GAP_MAX) {
+          pattern += ' '; // Letter separator
+        }
+        // Symbol gaps are ignored in pattern
+      }
+    }
+    
+    return { 
+      pattern, 
+      stepConfidence: confidenceFactors > 0 ? Math.pow(confidence, 1/confidenceFactors) : 0 
+    };
+  }
+  
+  /**
+   * Split morse pattern into individual character segments
+   */
+  private splitMorsePattern(pattern: string): string[] {
+    return pattern.split(' ').filter(segment => segment.length > 0);
+  }
+  
+  /**
+   * Decode morse segments to characters
+   */
+  private decodeSegments(segments: string[]): { chars: string[]; confidence: number } {
+    const chars: string[] = [];
+    let totalConfidence = 1.0;
+    let decodedCount = 0;
+    
+    for (const segment of segments) {
+      const char = this.morseToChar[segment];
+      if (char) {
+        chars.push(char);
+        totalConfidence *= 0.95; // High confidence for exact matches
+        decodedCount++;
+      } else {
+        // Try fuzzy matching for corrupted signals
+        const fuzzyMatch = this.fuzzyMorseMatch(segment);
+        if (fuzzyMatch) {
+          chars.push(fuzzyMatch.char);
+          totalConfidence *= fuzzyMatch.confidence;
+          decodedCount++;
+        } else {
+          chars.push('?');
+          totalConfidence *= 0.1; // Very low confidence for unknown
+          decodedCount++;
+        }
+      }
+    }
+    
+    return {
+      chars,
+      confidence: decodedCount > 0 ? Math.pow(totalConfidence, 1/decodedCount) : 0
+    };
+  }
+  
+  /**
+   * Fuzzy matching for corrupted morse patterns
+   */
+  private fuzzyMorseMatch(pattern: string): { char: string; confidence: number } | null {
+    let bestMatch: { char: string; confidence: number } | null = null;
+    
+    for (const [morsePattern, char] of Object.entries(this.morseToChar)) {
+      const similarity = this.calculateSimilarity(pattern, morsePattern);
+      if (similarity > 0.6 && (!bestMatch || similarity > bestMatch.confidence)) {
+        bestMatch = { char, confidence: similarity * 0.8 }; // Reduce confidence for fuzzy matches
+      }
+    }
+    
+    return bestMatch;
+  }
+  
+  /**
+   * Calculate similarity between two morse patterns
+   */
+  private calculateSimilarity(pattern1: string, pattern2: string): number {
+    if (pattern1 === pattern2) return 1.0;
+    
+    const maxLength = Math.max(pattern1.length, pattern2.length);
+    if (maxLength === 0) return 1.0;
+    
+    let matches = 0;
+    const minLength = Math.min(pattern1.length, pattern2.length);
+    
+    for (let i = 0; i < minLength; i++) {
+      if (pattern1[i] === pattern2[i]) {
+        matches++;
+      }
+    }
+    
+    return matches / maxLength;
+  }
+  
+  /**
+   * Interpret decoded characters as color + number message
+   */
+  private interpretMessage(chars: string[]): { color?: string; number?: string; confidence: number } {
+    if (chars.length === 0) {
+      return { confidence: 0 };
+    }
+    
+    let confidence = 1.0;
+    let color: string | undefined;
+    let number: string | undefined;
+    
+    // First character should be color
+    const firstChar = chars[0];
+    switch (firstChar) {
+      case 'R':
+        color = 'Red';
+        confidence *= 0.95;
+        break;
+      case 'G':
+        color = 'Green';
+        confidence *= 0.95;
+        break;
+      case 'B':
+        color = 'Blue';
+        confidence *= 0.95;
+        break;
+      default:
+        confidence *= 0.3; // Low confidence for invalid color
+    }
+    
+    // Remaining characters should be digits
+    const numberChars = chars.slice(1);
+    if (numberChars.length > 0) {
+      const numberStr = numberChars.join('');
+      const isValidNumber = /^[0-9]+$/.test(numberStr);
+      
+      if (isValidNumber) {
+        const num = parseInt(numberStr);
+        if (num >= 0 && num <= 100) {
+          number = numberStr;
+          confidence *= 0.95;
+        } else {
+          number = numberStr;
+          confidence *= 0.7; // Lower confidence for out-of-range numbers
+        }
+      } else {
+        confidence *= 0.2; // Very low confidence for non-numeric
+      }
+    }
+    
+    return { color, number, confidence };
+  }
+  
+  /**
+   * Simulate receiving a transmission (for testing)
+   */
+  public simulateTransmission(color: string, number: string): DecodedSignal | null {
+    // Clear any existing buffer
+    this.pulseBuffer = [];
+    
+    // Generate the expected pulse sequence
+    const colorLetter = color[0].toUpperCase();
+    const morseCode: { [key: string]: string } = {
+      'R': '·−·', 'G': '−−·', 'B': '−···',
+      '0': '−−−−−', '1': '·−−−−', '2': '··−−−', '3': '···−−', '4': '····−',
+      '5': '·····', '6': '−····', '7': '−−···', '8': '−−−··', '9': '−−−−·'
+    };
+    
+    // Add color pattern
+    const colorPattern = morseCode[colorLetter];
+    if (colorPattern) {
+      this.addPatternToPulseBuffer(colorPattern);
+      this.processGap(100); // Letter gap
+    }
+    
+    // Add number patterns
+    for (const digit of number) {
+      const digitPattern = morseCode[digit];
+      if (digitPattern) {
+        this.addPatternToPulseBuffer(digitPattern);
+        this.processGap(100); // Letter gap
+      }
+    }
+    
+    // Process confirmation flash
+    this.processPulse(167);
+    
+    return this.attemptDecoding();
+  }
+  
+  /**
+   * Helper to add morse pattern to pulse buffer
+   */
+  private addPatternToPulseBuffer(pattern: string): void {
+    for (let i = 0; i < pattern.length; i++) {
+      const symbol = pattern[i];
+      
+      if (symbol === '·') {
+        this.processPulse(120); // Dot duration
+      } else if (symbol === '−') {
+        this.processPulse(360); // Dash duration
+      }
+      
+      // Add symbol gap (except after last symbol)
+      if (i < pattern.length - 1) {
+        this.processGap(33);
+      }
+    }
+  }
+  
+  /**
+   * Get current decoding status
+   */
+  public getStatus(): { isDecoding: boolean; bufferSize: number } {
+    return {
+      isDecoding: this.isDecoding,
+      bufferSize: this.pulseBuffer.length
+    };
+  }
+  
+  /**
+   * Clear the pulse buffer
+   */
+  public clearBuffer(): void {
+    this.pulseBuffer = [];
+    if (this.decodingTimeout) {
+      clearTimeout(this.decodingTimeout);
+      this.decodingTimeout = null;
+    }
+  }
+}
+
+export default SignalDecoder;
