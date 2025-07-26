@@ -18,6 +18,18 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
   useEffect(() => {
     const interval = setInterval(() => {
       setBufferStatus(decoder.getStatus());
+      
+      // Check for new decoded signals
+      const newSignal = decoder.getLatestDecoded();
+      if (newSignal) {
+        setCurrentDecoding(newSignal);
+        
+        // Add to history after brief display
+        setTimeout(() => {
+          setDecodedSignals(prev => [newSignal, ...prev.slice(0, 9)]);
+          setCurrentDecoding(null);
+        }, 1500); // Reduced from 2000ms
+      }
     }, 100);
 
     return () => clearInterval(interval);

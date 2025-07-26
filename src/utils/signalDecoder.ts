@@ -58,6 +58,7 @@ class SignalDecoder {
   private pulseBuffer: SignalPulse[] = [];
   private isDecoding = false;
   private decodingTimeout: NodeJS.Timeout | null = null;
+  private latestDecoded: DecodedSignal | null = null;
   
   private constructor() {}
   
@@ -100,21 +101,20 @@ class SignalDecoder {
    * Schedule decoding attempt after signal appears complete
    */
   private scheduleDecoding(): void {
-    if (this.decodingTimeout) {
-      clearTimeout(this.decodingTimeout);
-    }
-    
-    // Wait for signal to complete (no new pulses for 500ms)
-    this.decodingTimeout = setTimeout(() => {
-      this.attemptDecoding();
-    }, 500);
+    // Process immediately - no waiting for "completion"
+    // In real fiber optic systems, we decode as blocks arrive
+    this.attemptDecoding();
   }
   
   /**
    * Attempt to decode the current pulse buffer
    */
-  private attemptDecoding(): DecodedSignal | null {
+  private attemptDecoding(): void {
     if (this.pulseBuffer.length === 0) return null;
+    
+    // Only attempt decoding if we have enough data for at least one character
+    const pulseCount = this.pulseBuffer.filter(p => p.type === 'pulse').length;
+    if (pulseCount < 2) return; // Need at least 2 pulses for shortest morse char
     
     const decodingSteps: DecodingStep[] = [];
     let confidence = 1.0;
@@ -180,7 +180,17 @@ class SignalDecoder {
     // Clear buffer after decoding
     this.pulseBuffer = [];
     
-    return result;
+    // Emit the decoded result immediately
+    this.emitDecodedSignal(result);
+  }
+  
+  /**
+   * Emit decoded signal to listeners
+   */
+  private emitDecodedSignal(signal: DecodedSignal): void {
+    // For now, store in a results array that the UI can poll
+    // In a real system, this would be an event emitter
+    this.latestDecoded = signal;
   }
   
   /**
@@ -427,6 +437,7 @@ class SignalDecoder {
   public simulateTransmission(color: string, number: string): DecodedSignal | null {
     // Clear any existing buffer
     this.pulseBuffer = [];
+    this.latestDecoded = null;
     
     // Generate the expected pulse sequence
     const colorLetter = color[0].toUpperCase();
@@ -443,19 +454,6 @@ class SignalDecoder {
       this.processGap(100); // Letter gap
     }
     
-    // For color patterns, use the specialized color decoder
-    const colorPatterns = ['·−·', '−−·', '−···'];
-    if (colorPatterns.some(cp => this.calculateSimilarity(pattern, cp) > 0.4)) {
-      const colorResult = this.forceDecodeAsColor(pattern);
-      if (colorResult) {
-        const charMap = { 'Red': 'R', 'Green': 'G', 'Blue': 'B' };
-        return { 
-          char: charMap[colorResult.color], 
-          confidence: colorResult.confidence 
-        };
-      }
-    }
-    
     // Add number patterns
     for (const digit of number) {
       const digitPattern = morseCode[digit];
@@ -468,7 +466,17 @@ class SignalDecoder {
     // Process confirmation flash
     this.processPulse(167);
     
-    return this.attemptDecoding();
+    // Return the latest decoded result
+    return this.latestDecoded;
+  }
+  
+  /**
+   * Get the latest decoded signal (for polling)
+   */
+  public getLatestDecoded(): DecodedSignal | null {
+    const result = this.latestDecoded;
+    this.latestDecoded = null; // Clear after reading
+    return result;
   }
   
   /**
