@@ -195,7 +195,9 @@ class SignalDecoder {
           break;
         }
       } else if (pulse.type === 'gap') {
-        if (pulse.duration === this.tolerance.LETTER_GAP_MIN) {
+        if (pulse.duration === this.tolerance.SYMBOL_GAP_MIN) {
+          // Symbol gap within letter - continue pattern
+        } else if (pulse.duration === this.tolerance.LETTER_GAP_MIN) {
           pattern += ' '; // Letter separator
         } else if (pulse.duration === this.tolerance.END_TRANSMISSION_MIN) {
           // End transmission - expected
@@ -353,7 +355,11 @@ class SignalDecoder {
       } else if (symbol === '−') {
         this.processPulse(this.timing.DASH_DURATION);
       }
-      // NO gaps between symbols within same letter - continuous transmission
+      
+      // Add symbol gap (except after last symbol)
+      if (i < pattern.length - 1) {
+        this.processGap(this.timing.SYMBOL_GAP);
+      }
     }
   }
   

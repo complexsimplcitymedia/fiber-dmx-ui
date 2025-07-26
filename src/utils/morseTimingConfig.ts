@@ -5,24 +5,27 @@
 
 export const MORSE_TIMING = {
   // Exact pulse durations (in milliseconds) - from specification
-  DOT_DURATION: 120,      // 12ms * 10 - EXACT
-  DASH_DURATION: 360,     // 36ms * 10 - EXACT
+  DOT_DURATION: 200,      // Short pulse - EXACT
+  DASH_DURATION: 600,     // Long pulse - EXACT
   
   // EXACT gap durations - from specification
   // NO gaps between symbols within same letter - continuous transmission
-  LETTER_GAP: 840,        // 84ms * 10 - separation between letters
+  SYMBOL_GAP: 200,        // Gap between symbols within same letter
+  LETTER_GAP: 600,        // Gap between letter and digits, between digits
   CONFIRMATION_FLASH: 1000, // 1 second confirmation - EXACT
-  END_TRANSMISSION_GAP: 840, // Same as letter gap - EXACT
+  END_TRANSMISSION_GAP: 600, // Same as letter gap - EXACT
   
   // Decoder tolerance ranges - ZERO TOLERANCE for exact matching
   DECODER_TOLERANCE: {
-    DOT_MIN: 120,         // EXACT match only
-    DOT_MAX: 120,         // EXACT match only
-    DASH_MIN: 360,        // EXACT match only
-    DASH_MAX: 360,        // EXACT match only
-    LETTER_GAP_MIN: 840,  // EXACT match only
-    LETTER_GAP_MAX: 840,  // EXACT match only
-    END_TRANSMISSION_MIN: 840 // EXACT match only
+    DOT_MIN: 200,         // EXACT match only
+    DOT_MAX: 200,         // EXACT match only
+    DASH_MIN: 600,        // EXACT match only
+    DASH_MAX: 600,        // EXACT match only
+    SYMBOL_GAP_MIN: 200,  // EXACT match only
+    SYMBOL_GAP_MAX: 200,  // EXACT match only
+    LETTER_GAP_MIN: 600,  // EXACT match only
+    LETTER_GAP_MAX: 600,  // EXACT match only
+    END_TRANSMISSION_MIN: 600 // EXACT match only
   }
 };
 

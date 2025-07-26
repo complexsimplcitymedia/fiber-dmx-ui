@@ -204,7 +204,15 @@ class PythonBridge {
           description: `Dash (${seqType})`
         });
       }
-      // NO gaps between symbols within same letter - continuous transmission
+      
+      // Add symbol gap (except after last symbol)
+      if (i < pattern.length - 1) {
+        sequence.push({
+          type: 'gap',
+          duration: MORSE_TIMING.SYMBOL_GAP,
+          description: 'Symbol gap'
+        });
+      }
     }
     
     return sequence;
