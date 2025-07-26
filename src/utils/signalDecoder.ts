@@ -191,22 +191,29 @@ class SignalDecoder {
     let confidence = 1.0;
     let confidenceFactors = 0;
     
+    console.log('=== DECODER ANALYSIS ===');
+    console.log('Processing pulses:', pulses.map(p => `${p.type}(${p.duration}ms)`).join(' -> '));
+    
     for (const pulse of pulses) {
       if (pulse.type === 'pulse') {
         if (pulse.duration >= this.DOT_MIN && pulse.duration <= this.DOT_MAX) {
+          console.log(`  ${pulse.duration}ms -> DOT (range: ${this.DOT_MIN}-${this.DOT_MAX})`);
           pattern += '·';
           confidence *= 0.95; // High confidence for dots
           confidenceFactors++;
         } else if (pulse.duration >= this.DASH_MIN && pulse.duration <= this.DASH_MAX) {
+          console.log(`  ${pulse.duration}ms -> DASH (range: ${this.DASH_MIN}-${this.DASH_MAX})`);
           pattern += '−';
           confidence *= 0.95; // High confidence for dashes
           confidenceFactors++;
         } else {
           // Ambiguous timing - make best guess
           if (pulse.duration < (this.DOT_MAX + this.DASH_MIN) / 2) {
+            console.log(`  ${pulse.duration}ms -> DOT (ambiguous, threshold: ${(this.DOT_MAX + this.DASH_MIN) / 2})`);
             pattern += '·';
             confidence *= 0.7; // Lower confidence
           } else {
+            console.log(`  ${pulse.duration}ms -> DASH (ambiguous, threshold: ${(this.DOT_MAX + this.DASH_MIN) / 2})`);
             pattern += '−';
             confidence *= 0.7; // Lower confidence
           }
@@ -214,11 +221,14 @@ class SignalDecoder {
         }
       } else if (pulse.type === 'gap') {
         if (pulse.duration >= this.LETTER_GAP_MIN && pulse.duration <= this.LETTER_GAP_MAX) {
+          console.log(`  ${pulse.duration}ms -> LETTER_GAP (range: ${this.LETTER_GAP_MIN}-${this.LETTER_GAP_MAX})`);
           pattern += ' '; // Letter separator
         }
         // Symbol gaps are ignored in pattern
       }
     }
+    
+    console.log(`Final decoded pattern: "${pattern}"`);
     
     return { 
       pattern, 

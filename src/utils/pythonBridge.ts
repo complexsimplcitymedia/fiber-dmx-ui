@@ -80,6 +80,10 @@ class PythonBridge {
     const LETTER_GAP = 100;
     const CONFIRMATION_FLASH = 167;
     
+    console.log('=== MORSE CODE DEBUG ===');
+    console.log('Morse patterns:', morseCode);
+    console.log('Timings - DOT:', DOT_DURATION, 'DASH:', DASH_DURATION, 'SYMBOL_GAP:', SYMBOL_GAP, 'LETTER_GAP:', LETTER_GAP);
+    
     switch (command) {
       case 'set_color':
         const color = args[0];
@@ -132,6 +136,7 @@ class PythonBridge {
         // Add color transmission
         const colorLetter = selectedColor[0].toUpperCase();
         const colorPattern = morseCode[colorLetter];
+        console.log(`Color: ${selectedColor} -> Letter: ${colorLetter} -> Pattern: ${colorPattern}`);
         sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
         sequence.push({
           type: 'gap',
@@ -142,6 +147,7 @@ class PythonBridge {
         // Add number transmission
         for (const digit of selectedNumber) {
           const digitPattern = morseCode[digit];
+          console.log(`Digit: ${digit} -> Pattern: ${digitPattern}`);
           sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
           sequence.push({
             type: 'gap',
@@ -203,10 +209,13 @@ class PythonBridge {
   ): TransmissionStep[] {
     const sequence: TransmissionStep[] = [];
     
+    console.log(`Converting pattern "${pattern}" for ${seqType} "${value}"`);
+    
     for (let i = 0; i < pattern.length; i++) {
       const symbol = pattern[i];
       
       if (symbol === '·') {
+        console.log(`  Adding DOT: ${dotDuration}ms`);
         sequence.push({
           type: 'dot',
           duration: dotDuration,
@@ -215,6 +224,7 @@ class PythonBridge {
           description: `Dot (${seqType})`
         });
       } else if (symbol === '−') {
+        console.log(`  Adding DASH: ${dashDuration}ms`);
         sequence.push({
           type: 'dash',
           duration: dashDuration,
@@ -226,6 +236,7 @@ class PythonBridge {
       
       // Add symbol gap (except after last symbol)
       if (i < pattern.length - 1) {
+        console.log(`  Adding SYMBOL_GAP: ${symbolGap}ms`);
         sequence.push({
           type: 'gap',
           duration: symbolGap,
@@ -233,6 +244,8 @@ class PythonBridge {
         });
       }
     }
+    
+    console.log(`Final sequence for "${pattern}":`, sequence.map(s => `${s.type}(${s.duration}ms)`).join(' -> '));
     
     return sequence;
   }
