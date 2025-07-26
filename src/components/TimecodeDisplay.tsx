@@ -151,7 +151,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       await executeDMXTransmission(selectedColor, currentNumber);
       
       // Add to history
-      setSentHistory(prev => [`${selectedColor} ${currentNumber}`, ...prev.slice(0, 4)]);
+      setSentHistory(prev => [`${selectedColor} ${currentNumber} - ${new Date().toLocaleTimeString()}`, ...prev.slice(0, 4)]);
       
       // Reset after successful transmission
       setTimeout(() => {
@@ -170,24 +170,28 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const handleLoop = async () => {
-    if (!selectedColor || !currentNumber || isTransmitting) return;
+    if (!selectedColor || !currentNumber || loopActive) return;
 
     setLoopActive(true);
     loopRef.current = true;
     setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
 
-    while (loopRef.current) {
-      try {
-        // Execute DMX transmission
-        await executeDMXTransmission(selectedColor, currentNumber);
-        
-        // Small delay between transmissions
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (error) {
-        console.error('Loop transmission error:', error);
-        break;
+    const loopTransmission = async () => {
+      while (loopRef.current) {
+        try {
+          // Execute DMX transmission
+          await executeDMXTransmission(selectedColor, currentNumber);
+          
+          // Small delay between transmissions
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error('Loop transmission error:', error);
+          break;
+        }
       }
-    }
+    };
+
+    loopTransmission();
   };
 
   const stopLoopingMorse = () => {
