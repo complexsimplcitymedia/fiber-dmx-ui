@@ -53,19 +53,19 @@ const FiberTesterController: React.FC = () => {
 
   // Morse code patterns
   const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '·−·',    // Red
-    'G': '−−·',    // Green  
-    'B': '−···',   // Blue
-    '0': '−−−−−',
-    '1': '·−−−−',
-    '2': '··−−−',
-    '3': '···−−',
-    '4': '····−',
-    '5': '·····',
-    '6': '−····',
-    '7': '−−···',
-    '8': '−−−··',
-    '9': '−−−−·'
+    'R': '·−·',     // Red - dot dash dot
+    'G': '−−·',     // Green - dash dash dot  
+    'B': '−···',    // Blue - dash dot dot dot
+    '0': '−−−−−',   // dash dash dash dash dash
+    '1': '·−−−−',   // dot dash dash dash dash
+    '2': '··−−−',   // dot dot dash dash dash
+    '3': '···−−',   // dot dot dot dash dash
+    '4': '····−',   // dot dot dot dot dash
+    '5': '·····',   // dot dot dot dot dot
+    '6': '−····',   // dash dot dot dot dot
+    '7': '−−···',   // dash dash dot dot dot
+    '8': '−−−··',   // dash dash dash dot dot
+    '9': '−−−−·'    // dash dash dash dash dot
   };
 
   // Perfect timing constants
