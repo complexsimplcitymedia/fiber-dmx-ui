@@ -1,35 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Power, Send, RotateCcw, Infinity, Square } from 'lucide-react';
-import PythonBridge, { PythonResponse, TransmissionStep } from '../utils/pythonBridge';
+import DMXController, { DMXFrame } from '../utils/dmxProtocol';
 import TimecodeDisplay from './TimecodeDisplay';
 import TimecodeSync from '../utils/timecodeSync';
 
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
-  onTransmissionData?: (color: string, number: string) => void;
-  onTransmissionPulse?: (duration: number) => void;
-  onTransmissionGap?: (duration: number) => void;
+  onDMXTransmission?: (frame: DMXFrame) => void;
 }
 
 const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
   onTransmissionChange, 
-  onTransmissionData,
-  onTransmissionPulse,
-  onTransmissionGap
+  onDMXTransmission
 }) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
-  const [isContinuousFlashing, setIsContinuousFlashing] = useState<boolean>(false);
   const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
-  const [pythonBridge] = useState(() => PythonBridge.getInstance());
+  const [dmxController] = useState(() => DMXController.getInstance());
   const [loopActive, setLoopActive] = useState<boolean>(false);
   const [loopRef] = useState({ current: false });
   const [transmissionTime, setTransmissionTime] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-  const [expectedDuration, setExpectedDuration] = useState<number>(0);
+  const [frameCount, setFrameCount] = useState<number>(0);
   const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   const colors = [
@@ -79,14 +74,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
   const handleColorSelect = (color: string) => {
     if (!isTransmitting && !loopActive) {
-      pythonBridge.setColor(color).then((response: PythonResponse) => {
-        if (response.success) {
-          setSelectedColor(color);
-          setStatusMessage(response.message);
-        } else {
-          setStatusMessage(response.message);
-        }
-      });
+      setSelectedColor(color);
+      setStatusMessage(`${color} selected - Enter number`);
     }
   };
 
@@ -94,14 +83,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     if (!isTransmitting && !loopActive && num) {
       const newNumber = currentNumber + num;
       if (parseInt(newNumber) <= 100) {
-        pythonBridge.setNumber(newNumber).then((response: PythonResponse) => {
-          if (response.success) {
-            setCurrentNumber(newNumber);
-            setStatusMessage(selectedColor ? `${selectedColor} ${newNumber} ready` : response.message);
-          } else {
-            setStatusMessage(response.message);
-          }
-        });
+        setCurrentNumber(newNumber);
+        setStatusMessage(selectedColor ? `${selectedColor} ${newNumber} ready` : `Number ${newNumber} set - Select color`);
       }
     }
   };
@@ -113,55 +96,45 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       return;
     }
     
-    pythonBridge.clearSelection().then((response: PythonResponse) => {
+    {
       setCurrentNumber('');
       setSelectedColor('');
-      setStatusMessage(response.message);
-    });
+      setStatusMessage('Select color and number');
+    }
   };
 
-  const executeTransmissionSequence = async (sequence: TransmissionStep[]) => {
+  const executeDMXTransmission = async (color: string, number: string) => {
     const startTime = Date.now();
     setIsTimerRunning(true);
     setTransmissionTime(0);
     
-    // Calculate EXACT expected duration - mathematical precision
-    const totalExpected = sequence.reduce((sum, step) => sum + step.duration, 0);
-    setExpectedDuration(totalExpected);
+    // Create DMX frame
+    const frame = dmxController.createColorNumberFrame(color, number);
+    console.log(`🚀 DMX-512 Transmission: ${color} ${number}`);
+    console.log(`📡 Frame ${frame.frameNumber}: Channels 1-5 =`, frame.channels.slice(0, 5));
     
-    // Update timer every 1ms for EXACT precision
+    // Update timer during transmission
     const timerInterval = setInterval(() => {
       setTransmissionTime(Date.now() - startTime);
     }, 1);
     
-    // FEED REAL PULSE DATA TO DECODER as transmission happens
-    for (const step of sequence) {
-      if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
-        // Turn on light - EXACT timing
-        setLightActive(true);
-        
-        // FEED DECODER: Real pulse with exact duration
-        onTransmissionPulse?.(step.duration);
-        
-        // EXACT timing - no delays, no approximation
-        await new Promise(resolve => setTimeout(resolve, step.duration));
-        
-        // Turn off light - EXACT timing
-        setLightActive(false);
-      } else if (step.type === 'gap') {
-        // FEED DECODER: Real gap with exact duration
-        onTransmissionGap?.(step.duration);
-        
-        // EXACT gap timing - no approximation
-        await new Promise(resolve => setTimeout(resolve, step.duration));
-      }
-    }
+    // Visual feedback - light on during transmission
+    setLightActive(true);
+    
+    // Transmit DMX frame over fiber optic
+    await dmxController.transmitFrame(frame);
+    
+    // Send frame to decoder
+    onDMXTransmission?.(frame);
+    
+    // Light off after transmission
+    setLightActive(false);
     
     clearInterval(timerInterval);
-    // EXACT final time calculation
     const finalTime = Date.now() - startTime;
     setTransmissionTime(finalTime);
     setIsTimerRunning(false);
+    setFrameCount(prev => prev + 1);
   };
 
   const handleSend = async () => {
@@ -173,32 +146,17 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
     setIsTransmitting(true);
 
     try {
-      // Prepare transmission - EXACT mathematical logic
-      const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
+      setStatusMessage(`Transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
       
-      if (!prepareResponse.success || !prepareResponse.sequence) {
-        setStatusMessage(prepareResponse.message);
-        setIsTransmitting(false);
-        return;
-      }
+      // Execute DMX transmission
+      await executeDMXTransmission(selectedColor, currentNumber);
       
-      setStatusMessage(prepareResponse.message);
+      // Update history
+      const newHistory = [`${selectedColor} ${currentNumber} sent via DMX-512`, ...sentHistory.slice(0, 4)];
+      setSentHistory(newHistory);
+      setStatusMessage(`${selectedColor} ${currentNumber} sent via DMX-512`);
       
-      // Execute EXACT transmission sequence
-      await executeTransmissionSequence(prepareResponse.sequence);
-      
-      // SIGNAL COMPLETE - Notify decoder AFTER transmission finishes
-      onTransmissionData?.(selectedColor, currentNumber);
-      
-      // Complete transmission - EXACT
-      const completeResponse = await pythonBridge.completeTransmission(selectedColor, currentNumber);
-      
-      if (completeResponse.success && completeResponse.history) {
-        setSentHistory(completeResponse.history);
-        setStatusMessage(completeResponse.message);
-      }
-      
-      // Reset after EXACT successful transmission
+      // Reset after successful transmission
       setTimeout(() => {
         setCurrentNumber('');
         setSelectedColor('');
@@ -207,7 +165,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       }, 2000);
 
     } catch (error) {
-      setStatusMessage(`Transmission failed: ${error}`);
+      setStatusMessage(`DMX transmission failed: ${error}`);
     } finally {
       setIsTransmitting(false);
       setLightActive(false);
@@ -217,37 +175,23 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber || loopActive) return;
     
-    // EXACT loop timing - no delays
     if (!selectedColor || !currentNumber || loopActive) return;
     setLoopActive(true);
     setIsTransmitting(true);
-    setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
+    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
 
     loopRef.current = true;
 
     while (loopRef.current) {
       try {
-        // EXACT loop cycle - mathematical precision
-        const prepareResponse = await pythonBridge.prepareTransmission(selectedColor, currentNumber);
-
-        if (!prepareResponse.success || !prepareResponse.sequence || prepareResponse.sequence.length === 0) {
-          setStatusMessage(prepareResponse.message || 'Invalid sequence');
-          setLoopActive(false);
-          setIsTransmitting(false);
-          loopRef.current = false;
-          break;
-        }
-
-        // Execute EXACT flash sequence
-        await executeTransmissionSequence(prepareResponse.sequence);
-
-        // SIGNAL COMPLETE - Notify decoder after each loop cycle
-        onTransmissionData?.(selectedColor, currentNumber);
-
-        // No delay between loops - EXACT continuous operation
+        // Execute DMX transmission
+        await executeDMXTransmission(selectedColor, currentNumber);
+        
+        // Small delay between continuous transmissions
+        await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (error) {
-        setStatusMessage(`Loop failed: ${error}`);
+        setStatusMessage(`DMX loop failed: ${error}`);
         setLoopActive(false);
         setIsTransmitting(false);
         loopRef.current = false;
@@ -255,7 +199,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       }
     }
 
-    // EXACT state reset
     setIsTransmitting(false);
     setLightActive(false);
     setStatusMessage('Select color and number');
@@ -264,7 +207,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const stopLoopingMorse = () => {
-    // EXACT stop - immediate
     loopRef.current = false;
     setLoopActive(false);
     setIsTransmitting(false);
@@ -283,10 +225,10 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-light text-transparent bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text mb-4 tracking-wide">
-            Fiber Tester Controller
+            DMX-512 Fiber Controller
           </h1>
           <div className="w-32 h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent mx-auto mb-4"></div>
-          <p className="text-slate-400 font-light tracking-wide">Professional Morse Code Transmission System</p>
+          <p className="text-slate-400 font-light tracking-wide">Professional DMX-512 Over Fiber Optic @ 1 Gbps</p>
         </div>
 
         {/* Status Light */}
@@ -326,30 +268,11 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
                 {(transmissionTime / 1000).toFixed(2)}s
               </div>
               <div className="retro-digital-text mb-6">
-                Continuously flashing {selectedColor} {currentNumber}
+                Continuously transmitting {selectedColor} {currentNumber} via DMX-512
               </div>
               
-              {/* Premium progress bar */}
-              <div className="relative w-96 h-3 bg-slate-800 rounded-full mb-4 mx-auto overflow-hidden border border-slate-600">
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-700 to-slate-800 rounded-full"></div>
-                <div 
-                  className={`h-full transition-all duration-100 rounded-full ${
-                    lightActive ? `bg-gradient-to-r ${lightColors.on.replace('bg-', 'from-').replace('-400', '-400')} to-white shadow-lg` : 'bg-gradient-to-r from-slate-600 to-slate-500'
-                  }`}
-                  style={{
-                    width: expectedDuration > 0 ? `${Math.min((transmissionTime / expectedDuration) * 100, 100)}%` : '0%'
-                  }}
-                />
-                <div className="absolute inset-0 rounded-full border border-slate-500/50"></div>
-              </div>
-              
-              <div className="text-lg text-slate-400 mb-6 font-light">
-                Expected: {(expectedDuration / 1000).toFixed(2)}s | 
-                {transmissionTime > expectedDuration ? (
-                  <span className="text-amber-400 ml-2 font-medium">Overtime</span>
-                ) : (
-                  <span className="text-emerald-400 ml-2 font-medium">On Time</span>
-                )}
+              <div className="text-lg text-emerald-400 mb-6 font-light">
+                Frame #{frameCount} | Fiber Optic @ 1 Gbps
               </div>
             </div>
           </div>
