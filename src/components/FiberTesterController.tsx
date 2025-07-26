@@ -141,7 +141,6 @@ const FiberTesterController: React.FC = () => {
     }
     
     // Confirmation flash
-    // Confirmation flash
     await flashLight(CONFIRMATION_FLASH);
 
     setStatusMessage('Transmission complete');
