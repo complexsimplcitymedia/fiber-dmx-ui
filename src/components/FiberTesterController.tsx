@@ -218,3 +218,5 @@ return (
   </div>
 );
 };
+
+export default FiberTesterController;
