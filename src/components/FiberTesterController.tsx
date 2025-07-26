@@ -135,8 +135,37 @@ const FiberTesterController: React.FC = () => {
   const handleSend = async () => {
     if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
 
+    // Calculate total transmission time
+    const colorLetter = selectedColor[0].toUpperCase();
+    const colorPattern = MORSE_PATTERNS[colorLetter];
+    let totalTime = 0;
+    
+    // Add color pattern time
+    if (colorPattern) {
+      for (let i = 0; i < colorPattern.length; i++) {
+        const symbol = colorPattern[i];
+        if (symbol === '·') totalTime += DOT_DURATION;
+        else if (symbol === '−') totalTime += DASH_DURATION;
+        if (i < colorPattern.length - 1) totalTime += SYMBOL_GAP;
+      }
+      totalTime += LETTER_GAP;
+    }
+    
+    // Add number patterns time
+    for (const digit of currentNumber) {
+      const digitPattern = MORSE_PATTERNS[digit];
+      if (digitPattern) {
+        for (let i = 0; i < digitPattern.length; i++) {
+          const symbol = digitPattern[i];
+          if (symbol === '·') totalTime += DOT_DURATION;
+          else if (symbol === '−') totalTime += DASH_DURATION;
+          if (i < digitPattern.length - 1) totalTime += SYMBOL_GAP;
+        }
+        totalTime += LETTER_GAP;
+      }
+    }
     setIsTransmitting(true);
-    setStatusMessage(`Transmitting ${selectedColor} ${currentNumber}...`);
+    setStatusMessage(`Transmitting ${selectedColor} ${currentNumber}... (${totalTime}ms)`);
 
     try {
       await executeMorseTransmission(selectedColor, currentNumber);
@@ -160,16 +189,95 @@ const FiberTesterController: React.FC = () => {
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber || loopActive) return;
     
-    setLoopActive(true);
-    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber}...`);
+    // Calculate timing for loop display
+    const colorLetter = selectedColor[0].toUpperCase();
+    const colorPattern = MORSE_PATTERNS[colorLetter];
+    let totalTime = 0;
     
-    while (loopActive) {
-      setIsTransmitting(true);
-      await executeMorseTransmission(selectedColor, currentNumber);
-      setIsTransmitting(false);
+    if (colorPattern) {
+      for (let i = 0; i < colorPattern.length; i++) {
+        const symbol = colorPattern[i];
+        if (symbol === '·') totalTime += DOT_DURATION;
+        else if (symbol === '−') totalTime += DASH_DURATION;
+        if (i < colorPattern.length - 1) totalTime += SYMBOL_GAP;
+      }
+      totalTime += LETTER_GAP;
+    }
+    
+    for (const digit of currentNumber) {
+      const digitPattern = MORSE_PATTERNS[digit];
+      if (digitPattern) {
+        for (let i = 0; i < digitPattern.length; i++) {
+          const symbol = digitPattern[i];
+          if (symbol === '·') totalTime += DOT_DURATION;
+          else if (symbol === '−') totalTime += DASH_DURATION;
+          if (i < digitPattern.length - 1) totalTime += SYMBOL_GAP;
+        }
+        totalTime += LETTER_GAP;
+      }
+    }
+    
+    setLoopActive(true);
+    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber}... (${totalTime}ms per cycle)`);
+    
+    const runLoop = async () => {
+      while (loopActive) {
+        setIsTransmitting(true);
+        await executeMorseTransmission(selectedColor, currentNumber);
+        setIsTransmitting(false);
+        
+        // Brief pause between loops
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check if loop was stopped
+        if (!loopActive) break;
+      }
+    };
+    
+    runLoop();
+  };
+
+  // Flash light for Morse pattern
+  const flashMorsePattern = async (pattern: string) => {
+    for (let i = 0; i < pattern.length; i++) {
+      const symbol = pattern[i];
       
-      // Brief pause between loops
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (symbol === '·') {
+        // Dot: light ON for 120ms
+        setLightActive(true);
+        await new Promise(resolve => setTimeout(resolve, DOT_DURATION));
+        setLightActive(false);
+      } else if (symbol === '−') {
+        // Dash: light ON for 360ms
+        setLightActive(true);
+        await new Promise(resolve => setTimeout(resolve, DASH_DURATION));
+        setLightActive(false);
+      }
+      
+      // Symbol gap (except after last symbol)
+      if (i < pattern.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, SYMBOL_GAP));
+      }
+    }
+  };
+
+  // Execute complete Morse transmission
+  const executeMorseTransmission = async (color: string, number: string) => {
+    // Flash color pattern
+    const colorLetter = color[0].toUpperCase();
+    const colorPattern = MORSE_PATTERNS[colorLetter];
+    if (colorPattern) {
+      await flashMorsePattern(colorPattern);
+      await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
+    }
+    
+    // Flash number patterns
+    for (const digit of number) {
+      const digitPattern = MORSE_PATTERNS[digit];
+      if (digitPattern) {
+        await flashMorsePattern(digitPattern);
+        await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
+      }
     }
   };
 
