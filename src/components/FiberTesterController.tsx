@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Power, Send, RotateCcw, Infinity, Square } from 'lucide-react';
+import { Power, Send, Infinity, Square } from 'lucide-react';
 import DMXController, { DMXFrame } from '../utils/dmxProtocol';
 import TimecodeDisplay from './TimecodeDisplay';
 import TimecodeSync from '../utils/timecodeSync';
@@ -7,11 +7,15 @@ import TimecodeSync from '../utils/timecodeSync';
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
   onDMXTransmission?: (frame: DMXFrame) => void;
+  onTransmissionPulse?: (duration: number) => void;
+  onTransmissionGap?: (duration: number) => void;
 }
 
 const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
   onTransmissionChange, 
-  onDMXTransmission
+  onDMXTransmission,
+  onTransmissionPulse,
+  onTransmissionGap
 }) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
@@ -383,7 +387,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
             <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
             <div className="flex flex-col items-center gap-1">
-              <RotateCcw className="w-10 h-10" />
+              <Send className="w-10 h-10" />
               <span className="text-sm">{isTransmitting && !loopActive ? 'SENDING' : 'SEND'}</span>
             </div>
           </button>
