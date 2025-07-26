@@ -51,14 +51,14 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
   }, [isReceiving, isListening, decoder]);
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'text-emerald-400';
-    if (confidence >= 0.6) return 'text-yellow-400';
+    if (confidence >= 0.85) return 'text-emerald-400';
+    if (confidence >= 0.65) return 'text-yellow-400';
     return 'text-red-400';
   };
 
   const getConfidenceBackground = (confidence: number) => {
-    if (confidence >= 0.8) return 'bg-emerald-500/20 border-emerald-500/30';
-    if (confidence >= 0.6) return 'bg-yellow-500/20 border-yellow-500/30';
+    if (confidence >= 0.85) return 'bg-emerald-500/20 border-emerald-500/30';
+    if (confidence >= 0.65) return 'bg-yellow-500/20 border-yellow-500/30';
     return 'bg-red-500/20 border-red-500/30';
   };
 
@@ -203,14 +203,19 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
                 <div key={index} className={`bg-slate-800/50 rounded-lg p-4 border ${getConfidenceBackground(signal.confidence)}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      {signal.confidence >= 0.8 ? (
+                      {signal.confidence >= 0.85 ? (
                         <CheckCircle className="w-5 h-5 text-emerald-400" />
                       ) : (
                         <AlertCircle className="w-5 h-5 text-yellow-400" />
                       )}
-                      <span className="text-slate-200 font-light text-lg">
+                      <span className={`font-light text-lg ${
+                        signal.color ? 'text-slate-200' : 'text-red-400'
+                      }`}>
                         {signal.color} {signal.number}
                       </span>
+                      {!signal.color && (
+                        <span className="text-red-400 text-sm ml-2">[COLOR DECODE FAILED]</span>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className={`text-sm ${getConfidenceColor(signal.confidence)}`}>

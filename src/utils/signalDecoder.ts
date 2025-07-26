@@ -327,23 +327,29 @@ class SignalDecoder {
     let color: string | undefined;
     let number: string | undefined;
     
-    // First character should be color
+    // First character should be color - this is CRITICAL and must be right
     const firstChar = chars[0];
-    switch (firstChar) {
-      case 'R':
-        color = 'Red';
-        confidence *= 0.95;
-        break;
-      case 'G':
-        color = 'Green';
-        confidence *= 0.95;
-        break;
-      case 'B':
-        color = 'Blue';
-        confidence *= 0.95;
-        break;
-      default:
-        confidence *= 0.3; // Low confidence for invalid color
+    
+    // Try exact match first
+    if (firstChar === 'R') {
+      color = 'Red';
+      confidence *= 0.98; // Very high confidence for exact match
+    } else if (firstChar === 'G') {
+      color = 'Green';
+      confidence *= 0.98; // Very high confidence for exact match
+    } else if (firstChar === 'B') {
+      color = 'Blue';
+      confidence *= 0.98; // Very high confidence for exact match
+    } else {
+      // If no exact match, try to force-decode the first morse segment as a color
+      const colorGuess = this.forceDecodeAsColor(chars.length > 0 ? this.getOriginalMorseForChar(firstChar) : '');
+      if (colorGuess) {
+        color = colorGuess.color;
+        confidence *= colorGuess.confidence;
+      } else {
+        // Last resort - if we can't decode color, mark as very low confidence
+        confidence *= 0.1;
+      }
     }
     
     // Remaining characters should be digits
@@ -370,6 +376,52 @@ class SignalDecoder {
   }
   
   /**
+   * Force decode a morse pattern as a color (R, G, or B) with fuzzy matching
+   */
+  private forceDecodeAsColor(morsePattern: string): { color: string; confidence: number } | null {
+    const colorPatterns = {
+      '·−·': { color: 'Red', char: 'R' },     // R = dot-dash-dot
+      '−−·': { color: 'Green', char: 'G' },   // G = dash-dash-dot  
+      '−···': { color: 'Blue', char: 'B' }    // B = dash-dot-dot-dot
+    };
+    
+    // Try exact match first
+    if (colorPatterns[morsePattern]) {
+      return { color: colorPatterns[morsePattern].color, confidence: 0.95 };
+    }
+    
+    // Try fuzzy matching with higher tolerance for colors
+    let bestMatch: { color: string; confidence: number } | null = null;
+    
+    for (const [pattern, info] of Object.entries(colorPatterns)) {
+      const similarity = this.calculateSimilarity(morsePattern, pattern);
+      
+      // Be more lenient with color matching - even 50% similarity is acceptable
+      if (similarity > 0.5 && (!bestMatch || similarity > bestMatch.confidence)) {
+        bestMatch = { 
+          color: info.color, 
+          confidence: similarity * 0.8 // Reduce confidence but still accept it
+        };
+      }
+    }
+    
+    return bestMatch;
+  }
+  
+  /**
+   * Get the original morse pattern that produced a character (for debugging)
+   */
+  private getOriginalMorseForChar(char: string): string {
+    // Reverse lookup in morse table
+    for (const [pattern, decodedChar] of Object.entries(this.morseToChar)) {
+      if (decodedChar === char) {
+        return pattern;
+      }
+    }
+    return '';
+  }
+  
+  /**
    * Simulate receiving a transmission (for testing)
    */
   public simulateTransmission(color: string, number: string): DecodedSignal | null {
@@ -389,6 +441,19 @@ class SignalDecoder {
     if (colorPattern) {
       this.addPatternToPulseBuffer(colorPattern);
       this.processGap(100); // Letter gap
+    }
+    
+    // For color patterns, use the specialized color decoder
+    const colorPatterns = ['·−·', '−−·', '−···'];
+    if (colorPatterns.some(cp => this.calculateSimilarity(pattern, cp) > 0.4)) {
+      const colorResult = this.forceDecodeAsColor(pattern);
+      if (colorResult) {
+        const charMap = { 'Red': 'R', 'Green': 'G', 'Blue': 'B' };
+        return { 
+          char: charMap[colorResult.color], 
+          confidence: colorResult.confidence 
+        };
+      }
     }
     
     // Add number patterns
