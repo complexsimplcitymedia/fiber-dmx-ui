@@ -8,8 +8,8 @@ export const MORSE_TIMING = {
   DOT_DURATION: 120,      // 12ms * 10 - EXACT
   DASH_DURATION: 360,     // 36ms * 10 - EXACT
   
-  // Exact gap durations - from specification  
-  SYMBOL_GAP: 120,        // 12ms * 10 - off periods between symbols
+  // EXACT gap durations - from specification
+  // NO gaps between symbols within same letter - continuous transmission
   LETTER_GAP: 840,        // 84ms * 10 - separation between letters
   CONFIRMATION_FLASH: 1000, // 1 second confirmation - EXACT
   END_TRANSMISSION_GAP: 840, // Same as letter gap - EXACT
@@ -20,8 +20,6 @@ export const MORSE_TIMING = {
     DOT_MAX: 120,         // EXACT match only
     DASH_MIN: 360,        // EXACT match only
     DASH_MAX: 360,        // EXACT match only
-    SYMBOL_GAP_MIN: 120,  // EXACT match only
-    SYMBOL_GAP_MAX: 120,  // EXACT match only
     LETTER_GAP_MIN: 840,  // EXACT match only
     LETTER_GAP_MAX: 840,  // EXACT match only
     END_TRANSMISSION_MIN: 840 // EXACT match only

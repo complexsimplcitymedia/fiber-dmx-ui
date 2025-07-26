@@ -199,8 +199,6 @@ class SignalDecoder {
           pattern += ' '; // Letter separator
         } else if (pulse.duration === this.tolerance.END_TRANSMISSION_MIN) {
           // End transmission - expected
-        } else if (pulse.duration === this.tolerance.SYMBOL_GAP_MIN) {
-          // Symbol gaps ignored in pattern
         } else {
           // REJECT - not exact match
           isValid = false;
@@ -355,11 +353,7 @@ class SignalDecoder {
       } else if (symbol === '−') {
         this.processPulse(this.timing.DASH_DURATION);
       }
-      
-      // Add symbol gap - EXACT (except after last symbol)
-      if (i < pattern.length - 1) {
-        this.processGap(this.timing.SYMBOL_GAP);
-      }
+      // NO gaps between symbols within same letter - continuous transmission
     }
   }
   

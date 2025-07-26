@@ -103,7 +103,7 @@ class PythonBridge {
         // Add color transmission - EXACT
         const colorLetter = selectedColor[0].toUpperCase();
         const colorPattern = MORSE_PATTERNS[colorLetter];
-        sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
+        sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION));
         sequence.push({
           type: 'gap',
           duration: LETTER_GAP,
@@ -113,7 +113,7 @@ class PythonBridge {
         // Add number transmission - EXACT
         for (const digit of selectedNumber) {
           const digitPattern = MORSE_PATTERNS[digit];
-          sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
+          sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION));
           sequence.push({
             type: 'gap',
             duration: LETTER_GAP,
@@ -181,7 +181,6 @@ class PythonBridge {
     value: string,
     dotDuration: number,
     dashDuration: number,
-    symbolGap: number
   ): TransmissionStep[] {
     const sequence: TransmissionStep[] = [];
     
@@ -205,15 +204,7 @@ class PythonBridge {
           description: `Dash (${seqType})`
         });
       }
-      
-      // Add symbol gap - EXACT (except after last symbol)
-      if (i < pattern.length - 1) {
-        sequence.push({
-          type: 'gap',
-          duration: symbolGap,
-          description: 'Symbol gap'
-        });
-      }
+      // NO gaps between symbols within same letter - continuous transmission
     }
     
     return sequence;
