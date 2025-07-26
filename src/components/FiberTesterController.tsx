@@ -404,8 +404,19 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
               <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/10 rounded-2xl"></div>
               <div className="absolute inset-0 border border-white/40 rounded-2xl"></div>
               
-              <div className="relative text-5xl font-light text-slate-800 flex items-center justify-center h-full tracking-wider">
+              {/* Retro Digital Display Background */}
+              <div className="absolute inset-2 bg-black rounded-xl border border-slate-600"></div>
+              
+              {/* Digital Number Display */}
+              <div className="relative flex items-center justify-center h-full">
+                <div className="text-6xl font-mono font-bold text-red-400 tracking-wider digital-glow"
+                     style={{
+                       fontFamily: 'monospace',
+                       textShadow: '0 0 10px #ef4444, 0 0 20px #ef4444, 0 0 30px #ef4444',
+                       filter: 'brightness(1.2)'
+                     }}>
                 {num}
+                </div>
               </div>
             </button>
           ))}
