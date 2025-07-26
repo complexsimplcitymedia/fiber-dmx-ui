@@ -180,7 +180,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       <div className="flex gap-4 mb-8">
         <button
           onClick={() => setIsListening(!isListening)}
-          className={`relative h-28 rounded-2xl flex items-center justify-center gap-2 border-2 transition-all duration-300 font-light tracking-wide overflow-hidden flex-1 ${
+          className={`relative h-28 w-40 rounded-2xl flex items-center justify-center gap-2 border-2 transition-all duration-300 font-light tracking-wide overflow-hidden ${
             isListening 
               ? 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-500 text-white shadow-2xl shadow-red-600/25' 
               : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border-emerald-500 text-white shadow-2xl shadow-emerald-600/25'
@@ -198,9 +198,9 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
         
         <button
           onClick={handleTestDecode}
-          className="relative h-28 rounded-2xl flex items-center justify-center gap-2 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
+          className="relative h-28 w-40 rounded-2xl flex items-center justify-center gap-2 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600
             text-white border-2 border-blue-500 transition-all duration-300 shadow-2xl shadow-blue-600/25
-            hover:scale-105 font-light tracking-wide overflow-hidden flex-1"
+            hover:scale-105 font-light tracking-wide overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
           <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
@@ -212,9 +212,9 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
         
         <button
           onClick={clearHistory}
-          className="relative h-28 rounded-2xl flex items-center justify-center gap-2 bg-gradient-to-br from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600
+          className="relative h-28 w-40 rounded-2xl flex items-center justify-center gap-2 bg-gradient-to-br from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600
             text-white border-2 border-slate-500 transition-all duration-300 shadow-2xl shadow-slate-600/25
-            hover:scale-105 font-light tracking-wide overflow-hidden flex-1"
+            hover:scale-105 font-light tracking-wide overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
           <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
