@@ -7,12 +7,16 @@ import TimecodeSync from '../utils/timecodeSync';
 const SplitScreenController: React.FC = () => {
   const [splitMode, setSplitMode] = useState<'split' | 'transmitter' | 'decoder'>('split');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
+  const [currentTransmission, setCurrentTransmission] = useState<{color: string, number: string} | null>(null);
   const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   const handleTransmissionStateChange = (transmitting: boolean) => {
     setIsTransmitting(transmitting);
   };
 
+  const handleTransmissionData = (color: string, number: string) => {
+    setCurrentTransmission({ color, number });
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950">
       {/* Mode Toggle Header */}
@@ -80,13 +84,19 @@ const SplitScreenController: React.FC = () => {
       <div className="flex-1">
         {splitMode === 'transmitter' && (
           <div className="h-screen">
-            <FiberTesterController onTransmissionChange={handleTransmissionStateChange} />
+            <FiberTesterController 
+              onTransmissionChange={handleTransmissionStateChange}
+              onTransmissionData={handleTransmissionData}
+            />
           </div>
         )}
         
         {splitMode === 'decoder' && (
           <div className="h-screen">
-            <DecoderPanel isReceiving={isTransmitting} />
+            <DecoderPanel 
+              isReceiving={isTransmitting} 
+              transmissionData={currentTransmission}
+            />
           </div>
         )}
         
@@ -100,7 +110,10 @@ const SplitScreenController: React.FC = () => {
                     <span className="text-emerald-400 text-sm font-light tracking-wide">TRANSMITTER</span>
                   </div>
                 </div>
-                <FiberTesterController onTransmissionChange={handleTransmissionStateChange} />
+                <FiberTesterController 
+                  onTransmissionChange={handleTransmissionStateChange}
+                  onTransmissionData={handleTransmissionData}
+                />
               </div>
             </div>
             
@@ -112,7 +125,10 @@ const SplitScreenController: React.FC = () => {
                     <span className="text-emerald-400 text-sm font-light tracking-wide">DECODER - READY</span>
                   </div>
                 </div>
-                <DecoderPanel isReceiving={isTransmitting} />
+                <DecoderPanel 
+                  isReceiving={isTransmitting} 
+                  transmissionData={currentTransmission}
+                />
               </div>
             </div>
           </div>

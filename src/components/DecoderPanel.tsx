@@ -6,10 +6,15 @@ import TimecodeSync from '../utils/timecodeSync';
 
 interface DecoderPanelProps {
   isReceiving: boolean;
+  transmissionData?: {color: string, number: string} | null;
   onSimulateReceive?: (color: string, number: string) => void;
 }
 
-const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateReceive }) => {
+const DecoderPanel: React.FC<DecoderPanelProps> = ({ 
+  isReceiving, 
+  transmissionData,
+  onSimulateReceive 
+}) => {
   const [decoder] = useState(() => SignalDecoder.getInstance());
   const [decodedSignals, setDecodedSignals] = useState<DecodedSignal[]>([]);
   const [currentDecoding, setCurrentDecoding] = useState<DecodedSignal | null>(null);
@@ -51,30 +56,28 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
 
   // Simulate receiving signals when transmission is active
   useEffect(() => {
-    if (isReceiving && isAlwaysReady) {
-      // This would normally be triggered by actual signal detection
-      // For demo purposes, we'll simulate random signals
-      const simulateRandomSignal = () => {
-        const colors = ['Red', 'Green', 'Blue'];
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const number = Math.floor(Math.random() * 101).toString();
+    if (isReceiving && isListening && transmissionData) {
+      // Decode the actual transmission data from the transmitter
+      const { color, number } = transmissionData;
+      
+      console.log(`=== DECODER RECEIVING ===`);
+      console.log(`Decoding: ${color} ${number}`);
+      
+      const decoded = decoder.simulateTransmission(color, number);
+      if (decoded) {
+        const receptionTimecode = timecodeSync.getCurrentTimecode();
+        console.log(`Timecode: ${timecodeSync.formatTimecode(receptionTimecode)}`);
         
-        const decoded = decoder.simulateTransmission(color, number);
-        if (decoded) {
-          setCurrentDecoding(decoded);
-          
-          // Add to history after a brief display
-          setTimeout(() => {
-            setDecodedSignals(prev => [decoded, ...prev.slice(0, 9)]); // Keep last 10
-            setCurrentDecoding(null);
-          }, 2000);
-        }
-      };
-
-      const timeout = setTimeout(simulateRandomSignal, 1000);
-      return () => clearTimeout(timeout);
+        setCurrentDecoding(decoded);
+        
+        // Add to history after brief display
+        setTimeout(() => {
+          setDecodedSignals(prev => [decoded, ...prev.slice(0, 9)]);
+          setCurrentDecoding(null);
+        }, 1500);
+      }
     }
-  }, [isReceiving, isAlwaysReady, decoder]);
+  }, [isReceiving, isListening, transmissionData, decoder, timecodeSync]);
 
   const getConfidenceColor = (confidence: number) => {
     // Professional equipment: 100% confidence or nothing

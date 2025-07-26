@@ -6,9 +6,13 @@ import TimecodeSync from '../utils/timecodeSync';
 
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
+  onTransmissionData?: (color: string, number: string) => void;
 }
 
-const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmissionChange }) => {
+const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
+  onTransmissionChange, 
+  onTransmissionData 
+}) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
@@ -165,6 +169,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
     console.log(`Timestamp: ${transmissionStart.timestamp}`);
     console.log(`Color: ${selectedColor}, Number: ${currentNumber}`);
 
+    // Notify decoder of transmission data
+    onTransmissionData?.(selectedColor, currentNumber);
     setIsTransmitting(true);
 
     try {
@@ -212,6 +218,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
     setIsTransmitting(true);
     setStatusMessage(`Continuously flashing ${selectedColor} ${currentNumber}...`);
 
+    // Notify decoder of transmission data
+    onTransmissionData?.(selectedColor, currentNumber);
     loopRef.current = true;
 
     while (loopRef.current) {
