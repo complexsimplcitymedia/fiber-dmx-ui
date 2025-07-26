@@ -17,19 +17,19 @@ const FiberTesterController: React.FC = () => {
   const CONFIRMATION_FLASH = 990;
 
   const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '·−·',
-    'G': '−−·',
-    'B': '−···',
-    '0': '−−−−−',
-    '1': '·−−−−',
-    '2': '··−−−',
-    '3': '···−−',
-    '4': '····−',
-    '5': '·····',
-    '6': '−····',
-    '7': '−−···',
-    '8': '−−−··',
-    '9': '−−−−·'
+    'R': '.-.',     // dot-dash-dot
+    'G': '--.',     // dash-dash-dot  
+    'B': '-...',    // dash-dot-dot-dot
+    '0': '-----',   // 5 dashes
+    '1': '.----',   // dot + 4 dashes
+    '2': '..---',   // 2 dots + 3 dashes
+    '3': '...--',   // 3 dots + 2 dashes
+    '4': '....-',   // 4 dots + 1 dash
+    '5': '.....',   // 5 dots
+    '6': '-....',   // 1 dash + 4 dots
+    '7': '--...',   // 2 dashes + 3 dots
+    '8': '---..',   // 3 dashes + 2 dots
+    '9': '----.'    // 4 dashes + 1 dot
   };
 
   const colors = [
