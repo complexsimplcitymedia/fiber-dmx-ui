@@ -106,22 +106,28 @@ const FiberTesterController: React.FC = () => {
       setTransmissionTime(Date.now() - startTime);
     }, 1);
     
-    // Visual feedback - light on during transmission
-    setLightActive(true);
-    
     // Execute Morse sequence
     if (response.sequence) {
       for (const step of response.sequence) {
         if (step.type === 'dot' || step.type === 'dash') {
+          // Light ON for pulse
+          setLightActive(true);
           await new Promise(resolve => setTimeout(resolve, step.duration));
+          // Light OFF after pulse
+          setLightActive(false);
         } else if (step.type === 'gap') {
+          // Light OFF during gaps
+          setLightActive(false);
           await new Promise(resolve => setTimeout(resolve, step.duration));
+        } else if (step.type === 'confirmation') {
+          // Light ON for confirmation flash
+          setLightActive(true);
+          await new Promise(resolve => setTimeout(resolve, step.duration));
+          // Light OFF after confirmation
+          setLightActive(false);
         }
       }
     }
-    
-    // Light off after transmission
-    setLightActive(false);
     
     clearInterval(timerInterval);
     const finalTime = Date.now() - startTime;
@@ -144,6 +150,10 @@ const FiberTesterController: React.FC = () => {
       // Execute Morse transmission
       await executeMorseTransmission(selectedColor, currentNumber);
       
+      // Complete transmission
+      const completeResponse = await pythonBridge.completeTransmission(selectedColor, currentNumber);
+      setStatusMessage(completeResponse.message);
+      
       // Reset after successful transmission
       setTimeout(() => {
         setCurrentNumber('');
@@ -157,6 +167,9 @@ const FiberTesterController: React.FC = () => {
     } finally {
       setIsTransmitting(false);
       setLightActive(false);
+      
+      // Mark transmission end with EXACT timecode
+      timecodeSync.markTransmissionEnd();
     }
   };
 
@@ -173,11 +186,7 @@ const FiberTesterController: React.FC = () => {
       // Execute Morse transmission
       await executeMorseTransmission(selectedColor, currentNumber);
       
-      // Light off after transmission
-      setLightActive(false);
-
       setIsTransmitting(false);
-      setLightActive(false);
       
       // Wait before next transmission
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -210,6 +219,9 @@ const FiberTesterController: React.FC = () => {
           </h1>
           <div className="w-32 h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent mx-auto mb-4"></div>
           <p className="text-slate-400 font-light tracking-wide">Professional Morse Code Over Fiber Optic</p>
+          <div className="text-emerald-400 text-sm mt-2 font-light">
+            Perfect Timing - Light Flashes Morse Code
+          </div>
         </div>
 
         {/* Status Light */}
