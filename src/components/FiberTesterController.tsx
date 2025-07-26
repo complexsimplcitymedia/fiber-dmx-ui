@@ -145,7 +145,7 @@ const FiberTesterController: React.FC = () => {
 
     setStatusMessage('Transmission complete');
     setIsTransmitting(false);
-  };
+  }
 
   // Loop handler
   const handleLoop = async () => {
