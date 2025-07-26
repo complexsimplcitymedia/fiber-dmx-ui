@@ -325,6 +325,50 @@ const FiberTesterController: React.FC = () => {
     }
   };
 
+  // Flash light for Morse pattern
+  const flashMorsePattern = async (pattern: string) => {
+    for (let i = 0; i < pattern.length; i++) {
+      const symbol = pattern[i];
+      
+      if (symbol === '·') {
+        // Dot: light ON for 120ms
+        setLightActive(true);
+        await new Promise(resolve => setTimeout(resolve, DOT_DURATION));
+        setLightActive(false);
+      } else if (symbol === '−') {
+        // Dash: light ON for 360ms
+        setLightActive(true);
+        await new Promise(resolve => setTimeout(resolve, DASH_DURATION));
+        setLightActive(false);
+      }
+      
+      // Symbol gap (except after last symbol)
+      if (i < pattern.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, SYMBOL_GAP));
+      }
+    }
+  };
+
+  // Execute complete Morse transmission
+  const executeMorseTransmission = async (color: string, number: string) => {
+    // Flash color pattern
+    const colorLetter = color[0].toUpperCase();
+    const colorPattern = MORSE_PATTERNS[colorLetter];
+    if (colorPattern) {
+      await flashMorsePattern(colorPattern);
+      await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
+    }
+    
+    // Flash number patterns
+    for (const digit of number) {
+      const digitPattern = MORSE_PATTERNS[digit];
+      if (digitPattern) {
+        await flashMorsePattern(digitPattern);
+        await new Promise(resolve => setTimeout(resolve, LETTER_GAP));
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-8">
       <div className="max-w-4xl mx-auto">
