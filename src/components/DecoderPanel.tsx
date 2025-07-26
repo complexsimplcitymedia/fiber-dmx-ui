@@ -114,7 +114,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
     decoder.processPulse(360); // dash
     
     // End transmission
-    decoder.processGap(840);   // end transmission gap
+    decoder.processGap(2000);   // end transmission gap
   };
 
   const clearHistory = () => {
@@ -209,8 +209,6 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
           <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
-          <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
           <div className="flex flex-col items-center gap-1">
             <Activity className="w-10 h-10" />
             <span className="text-sm">{isListening ? 'PAUSE' : 'LISTEN'}</span>
@@ -270,9 +268,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
                       ) : (
                         <AlertCircle className="w-5 h-5 text-red-400" />
                       )}
-                      <span className={`font-light text-lg ${
-                        'text-slate-200'
-                      }`}>
+                      <span className={`font-light text-lg text-slate-200`}>
                         {signal.color} {signal.number}
                       </span>
                     </div>
