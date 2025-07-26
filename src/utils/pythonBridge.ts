@@ -163,6 +163,13 @@ class PythonBridge {
           description: 'Confirmation flash'
         });
         
+        // Add end-of-transmission gap
+        sequence.push({
+          type: 'gap',
+          duration: 600, // Long gap to signal end of transmission
+          description: 'End of transmission'
+        });
+        
         const totalDuration = sequence.reduce((sum, step) => sum + step.duration, 0);
         
         return {
