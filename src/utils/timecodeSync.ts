@@ -79,17 +79,19 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const handleNumberInput = (num: string) => {
-    if (isTransmitting || loopActive) return;
+    if (isTransmitting || loopActive) {
+      return;
+    }
     
     if (currentNumber.length < 3) {
       const newNumber = currentNumber + num;
-      if (newNumber !== '0' && newNumber !== '00') {
+      if (newNumber.length <= 3) {
         setCurrentNumber(newNumber);
         setStatusMessage(selectedColor ? `${selectedColor} ${newNumber} ready` : `Number ${newNumber} set - Select color`);
       }
     }
   };
-  
+
   const handleClear = () => {
     // Stop any looping first
     if (loopActive) {
@@ -172,45 +174,24 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   };
 
   const handleLoop = async () => {
-    if (!selectedColor || !currentNumber || loopActive) return;
-    
+    if (!selectedColor || !currentNumber || isTransmitting) return;
+
     setLoopActive(true);
     loopRef.current = true;
     setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
-    
+
     while (loopRef.current) {
       try {
-        // Create DMX frame
-        const frame = dmxController.createColorNumberFrame(selectedColor, currentNumber);
+        // Execute DMX transmission
+        await executeDMXTransmission(selectedColor, currentNumber);
         
-        // Visual feedback - light on during transmission
-        setLightActive(true);
-        
-        // Transmit DMX frame over fiber optic
-        await dmxController.transmitFrame(frame);
-        
-        // Send frame to decoder
-        onDMXTransmission?.(frame);
-        
-        // Light off after transmission
-        setLightActive(false);
-        
-        setFrameCount(prev => prev + 1);
-        
-        // Wait before next transmission
+        // Small delay between transmissions
         await new Promise(resolve => setTimeout(resolve, 100));
-        
       } catch (error) {
         console.error('Loop transmission error:', error);
         break;
       }
     }
-
-    setIsTransmitting(false);
-    setLightActive(false);
-    setStatusMessage('Select color and number');
-    setCurrentNumber('');
-    setSelectedColor('');
   };
 
   const stopLoopingMorse = () => {
