@@ -90,19 +90,28 @@ const FiberTesterController: React.FC = () => {
   };
 
   const executeTransmission = async (color: string, number: string) => {
-    const colorPattern = MORSE_PATTERNS[color[0].toUpperCase()];
+    // Extract first letter and ensure it's uppercase
+    const colorLetter = color.charAt(0).toUpperCase();
+    const colorPattern = MORSE_PATTERNS[colorLetter];
+    
+    console.log(`Transmitting color: ${color} -> Letter: ${colorLetter} -> Pattern: ${colorPattern}`);
+    
     if (colorPattern) {
       await transmitMorsePattern(colorPattern);
       await sleep(LETTER_GAP);
     }
+    
     for (const digit of number) {
       if (!loopRef.current && loopActive) break;
+      if (!loopRef.current && loopActive) break;
       const digitPattern = MORSE_PATTERNS[digit];
+      console.log(`Transmitting digit: ${digit} -> Pattern: ${digitPattern}`);
       if (digitPattern) {
         await transmitMorsePattern(digitPattern);
         await sleep(LETTER_GAP);
       }
     }
+    
     await flashLight(CONFIRMATION_FLASH);
   };
 
