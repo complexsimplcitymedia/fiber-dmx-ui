@@ -1,30 +1,31 @@
 /**
- * Morse Code Timing Configuration - EXACT MATHEMATICAL PRECISION
- * No delays, no probability, no approximations - exact science only
+ * Morse Code Timing Configuration - ABSOLUTE CORNERSTONE TIMINGS
+ * These timings are IMMUTABLE - no flex, no changes, no approximations
+ * USER-SPECIFIED EXACT VALUES - DO NOT MODIFY
  */
 
 export const MORSE_TIMING = {
-  // EXACT user-specified timings
+  // ABSOLUTE CORNERSTONE TIMINGS - NO FLEX
   DOT_DURATION: 60,       // Short pulse - 60ms
   DASH_DURATION: 180,     // Long pulse - 180ms (3x dot)
   
-  // EXACT gap durations - user specified
+  // ABSOLUTE GAP DURATIONS - IMMUTABLE
   SYMBOL_GAP: 60,         // Gap between symbols within same letter - 60ms
   LETTER_GAP: 420,        // Gap between letter and digits, between digits - 420ms (7x dot)
   CONFIRMATION_FLASH: 1000, // 1 second confirmation - EXACT
   END_TRANSMISSION_GAP: 420, // Same as letter gap - EXACT
   
-  // Decoder tolerance ranges - using exact timings
+  // DECODER TOLERANCE - EXACT MATCH ONLY
   DECODER_TOLERANCE: {
-    DOT_MIN: 60,          // EXACT match only
-    DOT_MAX: 60,          // EXACT match only
-    DASH_MIN: 180,        // EXACT match only
-    DASH_MAX: 180,        // EXACT match only
-    SYMBOL_GAP_MIN: 60,   // EXACT match only
-    SYMBOL_GAP_MAX: 60,   // EXACT match only
-    LETTER_GAP_MIN: 420,  // EXACT match only
-    LETTER_GAP_MAX: 420,  // EXACT match only
-    END_TRANSMISSION_MIN: 420 // EXACT match only
+    DOT_MIN: 60,          // CORNERSTONE - NO FLEX
+    DOT_MAX: 60,          // CORNERSTONE - NO FLEX
+    DASH_MIN: 180,        // CORNERSTONE - NO FLEX
+    DASH_MAX: 180,        // CORNERSTONE - NO FLEX
+    SYMBOL_GAP_MIN: 60,   // CORNERSTONE - NO FLEX
+    SYMBOL_GAP_MAX: 60,   // CORNERSTONE - NO FLEX
+    LETTER_GAP_MIN: 420,  // CORNERSTONE - NO FLEX
+    LETTER_GAP_MAX: 420,  // CORNERSTONE - NO FLEX
+    END_TRANSMISSION_MIN: 420 // CORNERSTONE - NO FLEX
   }
 };
 
