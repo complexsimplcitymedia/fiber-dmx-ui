@@ -3,6 +3,7 @@ import { Split, Maximize2, Minimize2 } from 'lucide-react';
 import FiberTesterController from './FiberTesterController';
 import DecoderPanel from './DecoderPanel';
 import TimecodeSync from '../utils/timecodeSync';
+import SignalDecoder from '../utils/signalDecoder';
 
 const SplitScreenController: React.FC = () => {
   const [splitMode, setSplitMode] = useState<'split' | 'transmitter' | 'decoder'>('split');
@@ -23,13 +24,15 @@ const SplitScreenController: React.FC = () => {
   const handleTransmissionPulse = (duration: number) => {
     // FEED REAL PULSE DATA TO DECODER
     console.log(`📡 PULSE: ${duration}ms`);
-    // TODO: Feed to decoder via SignalDecoder.getInstance().processPulse(duration)
+    const decoder = SignalDecoder.getInstance();
+    decoder.processPulse(duration);
   };
   
   const handleTransmissionGap = (duration: number) => {
     // FEED REAL GAP DATA TO DECODER  
     console.log(`⏸️ GAP: ${duration}ms`);
-    // TODO: Feed to decoder via SignalDecoder.getInstance().processGap(duration)
+    const decoder = SignalDecoder.getInstance();
+    decoder.processGap(duration);
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950">

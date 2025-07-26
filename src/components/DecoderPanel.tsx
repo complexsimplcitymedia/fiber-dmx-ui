@@ -55,8 +55,11 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
 
   // EXACT signal reception - no simulation delays
   useEffect(() => {
-    // REMOVED SIMULATION - Now using real pulse/gap data
-    // The decoder will be fed via processPulse() and processGap() calls
+    if (transmissionData && isListening) {
+      // Signal completed - decoder should have already processed the real pulse/gap data
+      // Just log that transmission is complete
+      console.log(`🎯 TRANSMISSION COMPLETE: ${transmissionData.color} ${transmissionData.number} at ${transmissionData.timestamp}`);
+    }
   }, [isListening, transmissionData, decoder, timecodeSync]);
 
   const getConfidenceColor = (confidence: number) => {
@@ -71,14 +74,47 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
 
   const handleTestDecode = () => {
     // EXACT test - mathematical precision
-    const testSignal = decoder.simulateTransmission('Blue', '42');
-    if (testSignal) {
-      setCurrentDecoding(testSignal);
-      setTimeout(() => {
-        setDecodedSignals(prev => [testSignal, ...prev.slice(0, 9)]);
-        setCurrentDecoding(null);
-      }, 1000); // EXACT timing
-    }
+    console.log('🧪 TEST: Simulating Blue 42 transmission...');
+    
+    // Clear buffer first
+    decoder.clearBuffer();
+    
+    // Simulate Blue (B = −···) 42 with EXACT timings
+    // B: dash-dot-dot-dot
+    decoder.processPulse(360); // dash
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(840);   // letter gap
+    
+    // 4: dot-dot-dot-dot-dash
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(360); // dash
+    decoder.processGap(840);   // letter gap
+    
+    // 2: dot-dot-dash-dash-dash
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(120); // dot
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(360); // dash
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(360); // dash
+    decoder.processGap(120);   // symbol gap
+    decoder.processPulse(360); // dash
+    
+    // End transmission
+    decoder.processGap(840);   // end transmission gap
   };
 
   const clearHistory = () => {
