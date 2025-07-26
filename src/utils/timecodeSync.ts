@@ -14,8 +14,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   onDMXTransmission
 }) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
-  const [currentNumber, setCurrentNumber] = useState<string>('');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
+  const [currentNumber, setCurrentNumber] = useState<string>('');
   const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [sentHistory, setSentHistory] = useState<string[]>([]);
@@ -73,16 +73,19 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
   }, [isTransmitting, loopActive, onTransmissionChange]);
 
   const handleColorSelect = (color: string) => {
-    if (!isTransmitting && !loopActive) {
-      setSelectedColor(color);
-      setStatusMessage(`${color} selected - Enter number`);
-    }
+    if (isTransmitting || loopActive) return;
+    setSelectedColor(color);
+    setStatusMessage(currentNumber ? `${color} ${currentNumber} ready` : `${color} selected - Enter number`);
   };
 
   const handleNumberInput = (num: string) => {
-    if (!isTransmitting && !loopActive && num) {
+    if (isTransmitting || loopActive) {
+      return;
+    }
+    
+    if (currentNumber.length < 3) {
       const newNumber = currentNumber + num;
-      if (parseInt(newNumber) <= 100) {
+      if (newNumber.length <= 3) {
         setCurrentNumber(newNumber);
         setStatusMessage(selectedColor ? `${selectedColor} ${newNumber} ready` : `Number ${newNumber} set - Select color`);
       }
@@ -96,7 +99,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       return;
     }
     
-    {
+    if (!isTransmitting) {
       setCurrentNumber('');
       setSelectedColor('');
       setStatusMessage('Select color and number');
@@ -151,10 +154,8 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       // Execute DMX transmission
       await executeDMXTransmission(selectedColor, currentNumber);
       
-      // Update history
-      const newHistory = [`${selectedColor} ${currentNumber} sent via DMX-512`, ...sentHistory.slice(0, 4)];
-      setSentHistory(newHistory);
-      setStatusMessage(`${selectedColor} ${currentNumber} sent via DMX-512`);
+      // Add to history
+      setSentHistory(prev => [`${selectedColor} ${currentNumber} @ ${new Date().toLocaleTimeString()}`, ...prev.slice(0, 4)]);
       
       // Reset after successful transmission
       setTimeout(() => {
@@ -174,36 +175,25 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber || loopActive) return;
-    
-    if (!selectedColor || !currentNumber || loopActive) return;
+
     setLoopActive(true);
-    setIsTransmitting(true);
-    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
-
     loopRef.current = true;
-
+    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber} via DMX-512...`);
+    
+    // Start the loop
     while (loopRef.current) {
       try {
-        // Execute DMX transmission
         await executeDMXTransmission(selectedColor, currentNumber);
         
-        // Small delay between continuous transmissions
-        await new Promise(resolve => setTimeout(resolve, 100));
-
+        // Small delay between transmissions
+        if (loopRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       } catch (error) {
-        setStatusMessage(`DMX loop failed: ${error}`);
-        setLoopActive(false);
-        setIsTransmitting(false);
-        loopRef.current = false;
+        console.error('Loop transmission error:', error);
         break;
       }
     }
-
-    setIsTransmitting(false);
-    setLightActive(false);
-    setStatusMessage('Select color and number');
-    setCurrentNumber('');
-    setSelectedColor('');
   };
 
   const stopLoopingMorse = () => {
@@ -221,8 +211,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       {/* Professional Timecode Display */}
       <TimecodeDisplay label="TX" position="top-left" size="medium" />
       
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-light text-transparent bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text mb-4 tracking-wide">
             DMX-512 Fiber Controller
@@ -279,20 +268,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
         )}
 
         {/* Status Display */}
-        {/* DMX Professional Branding - Centered Between Timecode and Status Screen */}
-        <div className="absolute top-72 left-8 z-20">
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-lg px-4 py-3 shadow-xl">
-            <div className="text-amber-400 font-bold text-lg tracking-wider mb-1">
-              POWERED BY DMX
-            </div>
-            <div className="text-slate-400 text-sm font-light leading-tight">
-              The industry standard for precision lighting control for over 40 years.
-            </div>
-          </div>
-        </div>
-        
-        <div className={`bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 mb-8 border border-slate-600 shadow-xl ${loopActive ? 'opacity-50' : ''}`}>
-          
+        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-6 border border-slate-600 shadow-xl mb-8">
           <div className="text-center">
             <div className="retro-digital-display mb-4" style={{ fontSize: '2.5rem', lineHeight: '1.4' }}>
               {statusMessage}
@@ -401,7 +377,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 rounded-2xl"></div>
             <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
             <div className="flex flex-col items-center gap-1">
-              <RotateCcw className="w-10 h-10" />
+              <Send className="w-10 h-10" />
               <span className="text-sm">{isTransmitting && !loopActive ? 'SENDING' : 'SEND'}</span>
             </div>
           </button>
