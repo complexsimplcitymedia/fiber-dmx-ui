@@ -14,7 +14,7 @@ const FiberTesterController: React.FC = () => {
   const DOT_DURATION = 120;      // 120ms exactly
   const DASH_DURATION = 360;     // 360ms exactly  
   const SYMBOL_GAP = 120;        // 120ms exactly
-  const LETTER_GAP = 840;        // 840ms exactly
+  const CONFIRMATION_FLASH = 990;
 
   // Correct International Morse Code patterns
   const MORSE_PATTERNS: { [key: string]: string } = {
@@ -129,7 +129,8 @@ const FiberTesterController: React.FC = () => {
       await sleep(LETTER_GAP); // Gap after color
     }
     
-    // Transmit each digit
+    // Confirmation flash - 990ms
+    await flashLight(CONFIRMATION_FLASH);
     for (let i = 0; i < number.length; i++) {
       if (!loopRunning && loopActive) return; // Stop if loop was cancelled
       
