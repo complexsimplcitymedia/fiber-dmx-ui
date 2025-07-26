@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Zap, CheckCircle, AlertCircle, Activity, RotateCcw } from 'lucide-react';
 import SignalDecoder, { DecodedSignal, DecodingStep } from '../utils/signalDecoder';
+import TimecodeDisplay from './TimecodeDisplay';
+import TimecodeSync from '../utils/timecodeSync';
 
 interface DecoderPanelProps {
   isReceiving: boolean;
@@ -13,6 +15,7 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
   const [currentDecoding, setCurrentDecoding] = useState<DecodedSignal | null>(null);
   const [isListening, setIsListening] = useState<boolean>(true);
   const [bufferStatus, setBufferStatus] = useState({ isDecoding: false, bufferSize: 0 });
+  const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   // Update buffer status periodically
   useEffect(() => {
@@ -25,6 +28,13 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
       // Check for new decoded signals
       const newSignal = decoder.getLatestDecoded();
       if (newSignal) {
+        // Log reception with precise timecode
+        const receptionTimecode = timecodeSync.getCurrentTimecode();
+        console.log(`=== SIGNAL DECODED ===`);
+        console.log(`Timecode: ${timecodeSync.formatTimecode(receptionTimecode)}`);
+        console.log(`Decoded: ${newSignal.color} ${newSignal.number}`);
+        console.log(`Confidence: ${(newSignal.confidence * 100).toFixed(1)}%`);
+        
         setCurrentDecoding(newSignal);
         
         // Add to history after brief display
@@ -96,6 +106,9 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({ isReceiving, onSimulateRece
 
   return (
     <div className="h-full bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-6">
+      {/* Professional Timecode Display */}
+      <TimecodeDisplay label="RX" position="top-right" size="medium" />
+      
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">

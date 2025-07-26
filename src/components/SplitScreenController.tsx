@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Split, Maximize2, Minimize2 } from 'lucide-react';
 import FiberTesterController from './FiberTesterController';
 import DecoderPanel from './DecoderPanel';
+import TimecodeSync from '../utils/timecodeSync';
 
 const SplitScreenController: React.FC = () => {
   const [splitMode, setSplitMode] = useState<'split' | 'transmitter' | 'decoder'>('split');
   const [isTransmitting, setIsTransmitting] = useState<boolean>(false);
+  const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   const handleTransmissionStateChange = (transmitting: boolean) => {
     setIsTransmitting(transmitting);
@@ -58,6 +60,17 @@ const SplitScreenController: React.FC = () => {
             >
               <Minimize2 className="w-4 h-4 inline mr-2" />
               Decoder
+            </button>
+            
+            {/* Jam Sync Button - like professional equipment */}
+            <button
+              onClick={() => timecodeSync.jamSync()}
+              className="px-4 py-2 bg-gradient-to-br from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600
+                text-white rounded-lg border-2 border-amber-500 transition-all duration-300 shadow-xl shadow-amber-600/25
+                hover:scale-105 font-light tracking-wide"
+              title="Reset timecode synchronization"
+            >
+              JAM SYNC
             </button>
           </div>
         </div>

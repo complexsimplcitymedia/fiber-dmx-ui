@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Power, Send, RotateCcw, Infinity, Square } from 'lucide-react';
 import PythonBridge, { PythonResponse, TransmissionStep } from '../utils/pythonBridge';
+import TimecodeDisplay from './TimecodeDisplay';
+import TimecodeSync from '../utils/timecodeSync';
 
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
@@ -20,6 +22,7 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
   const [transmissionTime, setTransmissionTime] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [expectedDuration, setExpectedDuration] = useState<number>(0);
+  const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   const colors = [
     { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
@@ -155,6 +158,13 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
   const handleSend = async () => {
     if (!selectedColor || !currentNumber || isTransmitting || loopActive) return;
 
+    // Mark transmission start with precise timecode
+    const transmissionStart = timecodeSync.markTransmissionStart();
+    console.log(`=== TRANSMISSION START ===`);
+    console.log(`Timecode: ${timecodeSync.formatTimecode(transmissionStart.timecode)}`);
+    console.log(`Timestamp: ${transmissionStart.timestamp}`);
+    console.log(`Color: ${selectedColor}, Number: ${currentNumber}`);
+
     setIsTransmitting(true);
 
     try {
@@ -260,6 +270,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-8">
+      {/* Professional Timecode Display */}
+      <TimecodeDisplay label="TX" position="top-left" size="medium" />
+      
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
