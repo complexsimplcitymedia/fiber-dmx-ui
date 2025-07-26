@@ -109,17 +109,17 @@ const FiberTesterController: React.FC = () => {
   };
 
   const handleClear = () => {
-    if (loopActive) {
-      setLoopActive(false);
-      setIsTransmitting(false);
-      setLightActive(false);
-    }
+    // Always stop loop first if active
+    setLoopActive(false);
+    setIsTransmitting(false);
+    setLightActive(false);
     
-    if (!isTransmitting) {
+    // Clear selections
+    setTimeout(() => {
       setCurrentNumber('');
       setSelectedColor('');
       setStatusMessage('Select color and number');
-    }
+    }, 100); // Small delay to ensure loop stops first
   };
 
   // Flash light for Morse pattern
@@ -197,24 +197,40 @@ const FiberTesterController: React.FC = () => {
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber || loopActive) return;
     
-    const totalTime = calculateTransmissionTime(selectedColor, currentNumber);
-    
     setLoopActive(true);
+    const totalTime = calculateTransmissionTime(selectedColor, currentNumber);
     setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber}... (${totalTime}ms per cycle)`);
     
-    // Start the loop
-    while (loopActive) {
-      setIsTransmitting(true);
-      await executeMorseTransmission(selectedColor, currentNumber);
+    // Use a separate function to handle the loop to avoid closure issues
+    const runLoop = async () => {
+      while (loopActive) {
+        setIsTransmitting(true);
+        await executeMorseTransmission(selectedColor, currentNumber);
+        setIsTransmitting(false);
+        
+        // Brief pause between loops
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check if loop was stopped during the pause
+        if (!loopActive) break;
+      }
+    };
+    
+    runLoop().catch(error => {
+      console.error('Loop error:', error);
+      setLoopActive(false);
       setIsTransmitting(false);
-      
-      // Brief pause between loops
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Check if loop was stopped
-      if (!loopActive) break;
-    }
+      setLightActive(false);
+    });
   };
+
+  // Effect to handle loop state changes
+  React.useEffect(() => {
+    if (!loopActive) {
+      setIsTransmitting(false);
+      setLightActive(false);
+    }
+  }, [loopActive]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-8">
