@@ -5,26 +5,26 @@
 
 export const MORSE_TIMING = {
   // Basic pulse durations (in milliseconds)
-  DOT_DURATION: 120,
-  DASH_DURATION: 360,
+  DOT_DURATION: 1200,
+  DASH_DURATION: 3600,
   
   // Gap durations
-  SYMBOL_GAP: 33,        // Gap between dots/dashes within a letter
-  LETTER_GAP: 100,       // Gap between letters
-  CONFIRMATION_FLASH: 167, // Duration of confirmation pulse
-  END_TRANSMISSION_GAP: 600, // Gap that signals end of complete transmission
+  SYMBOL_GAP: 330,        // Gap between dots/dashes within a letter
+  LETTER_GAP: 1000,       // Gap between letters
+  CONFIRMATION_FLASH: 1670, // Duration of confirmation pulse
+  END_TRANSMISSION_GAP: 6000, // Gap that signals end of complete transmission
   
   // Decoder tolerance ranges (based on timing constants above)
   DECODER_TOLERANCE: {
-    DOT_MIN: 80,         // DOT_DURATION - 40ms tolerance
-    DOT_MAX: 160,        // DOT_DURATION + 40ms tolerance
-    DASH_MIN: 280,       // DASH_DURATION - 80ms tolerance  
-    DASH_MAX: 440,       // DASH_DURATION + 80ms tolerance
-    SYMBOL_GAP_MIN: 20,  // SYMBOL_GAP - 13ms tolerance
-    SYMBOL_GAP_MAX: 60,  // SYMBOL_GAP + 27ms tolerance
-    LETTER_GAP_MIN: 80,  // LETTER_GAP - 20ms tolerance
-    LETTER_GAP_MAX: 140, // LETTER_GAP + 40ms tolerance
-    END_TRANSMISSION_MIN: 500 // Minimum gap to detect transmission end
+    DOT_MIN: 800,         // DOT_DURATION - 400ms tolerance
+    DOT_MAX: 1600,        // DOT_DURATION + 400ms tolerance
+    DASH_MIN: 2800,       // DASH_DURATION - 800ms tolerance  
+    DASH_MAX: 4400,       // DASH_DURATION + 800ms tolerance
+    SYMBOL_GAP_MIN: 200,  // SYMBOL_GAP - 130ms tolerance
+    SYMBOL_GAP_MAX: 600,  // SYMBOL_GAP + 270ms tolerance
+    LETTER_GAP_MIN: 800,  // LETTER_GAP - 200ms tolerance
+    LETTER_GAP_MAX: 1400, // LETTER_GAP + 400ms tolerance
+    END_TRANSMISSION_MIN: 5000 // Minimum gap to detect transmission end
   }
 };
 
