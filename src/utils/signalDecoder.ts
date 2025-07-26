@@ -2,6 +2,7 @@
  * Signal Decoder - Decodes Morse code transmissions back to color/number pairs
  * Handles timing analysis and pattern matching for fiber optic signals
  */
+import { MORSE_TIMING, PATTERN_TO_CHAR } from './morseTimingConfig';
 
 export interface DecodedSignal {
   color?: string;
@@ -28,39 +29,17 @@ export interface SignalPulse {
 class SignalDecoder {
   private static instance: SignalDecoder;
   
-  // Morse code lookup (reverse of transmission)
-  private readonly morseToChar: { [pattern: string]: string } = {
-    '·−·': 'R',
-    '−−·': 'G', 
-    '−···': 'B',
-    '−−−−−': '0',
-    '·−−−−': '1',
-    '··−−−': '2',
-    '···−−': '3',
-    '····−': '4',
-    '·····': '5',
-    '−····': '6',
-    '−−···': '7',
-    '−−−··': '8',
-    '−−−−·': '9'
-  };
-  
-  // Timing thresholds (with tolerance)
-  private readonly DOT_MIN = 80;
-  private readonly DOT_MAX = 160;
-  private readonly DASH_MIN = 280;
-  private readonly DASH_MAX = 440;
-  private readonly SYMBOL_GAP_MIN = 20;
-  private readonly SYMBOL_GAP_MAX = 60;
-  private readonly LETTER_GAP_MIN = 80;
-  private readonly LETTER_GAP_MAX = 140;
+  // Use shared timing constants for perfect sync
+  private readonly timing = MORSE_TIMING;
+  private readonly tolerance = MORSE_TIMING.DECODER_TOLERANCE;
+  private readonly morseToChar = PATTERN_TO_CHAR;
   
   private pulseBuffer: SignalPulse[] = [];
   private isDecoding = false;
   private decodingTimeout: NodeJS.Timeout | null = null;
   private latestDecoded: DecodedSignal | null = null;
   private lastPulseTime = 0;
-  private readonly TRANSMISSION_END_GAP = 500; // 500ms gap indicates end of transmission
+  private readonly TRANSMISSION_END_GAP = this.tolerance.END_TRANSMISSION_MIN;
   
   private constructor() {}
   
@@ -100,7 +79,7 @@ class SignalDecoder {
     this.pulseBuffer.push(gap);
     
     // Check if this is an end-of-transmission gap
-    if (duration >= this.TRANSMISSION_END_GAP) {
+    if (duration >= this.tolerance.END_TRANSMISSION_MIN) {
       // Wait for a clear "end of pattern" signal (like a long pause or special marker)
       // Only decode and update the UI after this end signal is detected
       this.attemptDecoding();
@@ -115,7 +94,7 @@ class SignalDecoder {
     const timeSinceLastPulse = now - this.lastPulseTime;
     
     // If enough time has passed since last pulse, consider transmission complete
-    if (timeSinceLastPulse >= this.TRANSMISSION_END_GAP && this.pulseBuffer.length > 0) {
+    if (timeSinceLastPulse >= this.tolerance.END_TRANSMISSION_MIN && this.pulseBuffer.length > 0) {
       // Wait for a clear "end of pattern" signal (like a long pause or special marker)
       // Only decode and update the UI after this end signal is detected
       this.attemptDecoding();
@@ -221,32 +200,32 @@ class SignalDecoder {
     
     for (const pulse of pulses) {
       if (pulse.type === 'pulse') {
-        if (pulse.duration >= this.DOT_MIN && pulse.duration <= this.DOT_MAX) {
-          console.log(`  ${pulse.duration}ms -> DOT (range: ${this.DOT_MIN}-${this.DOT_MAX})`);
+        if (pulse.duration >= this.tolerance.DOT_MIN && pulse.duration <= this.tolerance.DOT_MAX) {
+          console.log(`  ${pulse.duration}ms -> DOT (range: ${this.tolerance.DOT_MIN}-${this.tolerance.DOT_MAX})`);
           pattern += '·';
           confidence *= 0.95; // High confidence for dots
           confidenceFactors++;
-        } else if (pulse.duration >= this.DASH_MIN && pulse.duration <= this.DASH_MAX) {
-          console.log(`  ${pulse.duration}ms -> DASH (range: ${this.DASH_MIN}-${this.DASH_MAX})`);
+        } else if (pulse.duration >= this.tolerance.DASH_MIN && pulse.duration <= this.tolerance.DASH_MAX) {
+          console.log(`  ${pulse.duration}ms -> DASH (range: ${this.tolerance.DASH_MIN}-${this.tolerance.DASH_MAX})`);
           pattern += '−';
           confidence *= 0.95; // High confidence for dashes
           confidenceFactors++;
         } else {
           // Ambiguous timing - make best guess
-          if (pulse.duration < (this.DOT_MAX + this.DASH_MIN) / 2) {
-            console.log(`  ${pulse.duration}ms -> DOT (ambiguous, threshold: ${(this.DOT_MAX + this.DASH_MIN) / 2})`);
+          if (pulse.duration < (this.tolerance.DOT_MAX + this.tolerance.DASH_MIN) / 2) {
+            console.log(`  ${pulse.duration}ms -> DOT (ambiguous, threshold: ${(this.tolerance.DOT_MAX + this.tolerance.DASH_MIN) / 2})`);
             pattern += '·';
             confidence *= 0.7; // Lower confidence
           } else {
-            console.log(`  ${pulse.duration}ms -> DASH (ambiguous, threshold: ${(this.DOT_MAX + this.DASH_MIN) / 2})`);
+            console.log(`  ${pulse.duration}ms -> DASH (ambiguous, threshold: ${(this.tolerance.DOT_MAX + this.tolerance.DASH_MIN) / 2})`);
             pattern += '−';
             confidence *= 0.7; // Lower confidence
           }
           confidenceFactors++;
         }
       } else if (pulse.type === 'gap') {
-        if (pulse.duration >= this.LETTER_GAP_MIN && pulse.duration <= this.LETTER_GAP_MAX) {
-          console.log(`  ${pulse.duration}ms -> LETTER_GAP (range: ${this.LETTER_GAP_MIN}-${this.LETTER_GAP_MAX})`);
+        if (pulse.duration >= this.tolerance.LETTER_GAP_MIN && pulse.duration <= this.tolerance.LETTER_GAP_MAX) {
+          console.log(`  ${pulse.duration}ms -> LETTER_GAP (range: ${this.tolerance.LETTER_GAP_MIN}-${this.tolerance.LETTER_GAP_MAX})`);
           pattern += ' '; // Letter separator
         }
         // Symbol gaps are ignored in pattern
@@ -456,14 +435,9 @@ class SignalDecoder {
     
     // Generate the expected pulse sequence
     const colorLetter = color[0].toUpperCase();
-    const morseCode: { [key: string]: string } = {
-      'R': '·−·', 'G': '−−·', 'B': '−···',
-      '0': '−−−−−', '1': '·−−−−', '2': '··−−−', '3': '···−−', '4': '····−',
-      '5': '·····', '6': '−····', '7': '−−···', '8': '−−−··', '9': '−−−−·'
-    };
     
     // Add color pattern
-    const colorPattern = morseCode[colorLetter];
+    const colorPattern = PATTERN_TO_CHAR[colorLetter] ? Object.keys(PATTERN_TO_CHAR).find(k => PATTERN_TO_CHAR[k] === colorLetter) : undefined;
     if (colorPattern) {
       this.addPatternToPulseBuffer(colorPattern);
       this.processGap(100); // Letter gap
@@ -471,7 +445,7 @@ class SignalDecoder {
     
     // Add number patterns
     for (const digit of number) {
-      const digitPattern = morseCode[digit];
+      const digitPattern = Object.keys(PATTERN_TO_CHAR).find(k => PATTERN_TO_CHAR[k] === digit);
       if (digitPattern) {
         this.addPatternToPulseBuffer(digitPattern);
         this.processGap(100); // Letter gap
@@ -479,10 +453,10 @@ class SignalDecoder {
     }
     
     // Process confirmation flash
-    this.processPulse(167);
+    this.processPulse(this.timing.CONFIRMATION_FLASH);
     
     // Add end-of-transmission gap to trigger decoding
-    this.processGap(600);
+    this.processGap(this.timing.END_TRANSMISSION_GAP);
     
     // Return the latest decoded result
     return this.latestDecoded;
@@ -505,14 +479,14 @@ class SignalDecoder {
       const symbol = pattern[i];
       
       if (symbol === '·') {
-        this.processPulse(120); // Dot duration
+        this.processPulse(this.timing.DOT_DURATION);
       } else if (symbol === '−') {
-        this.processPulse(360); // Dash duration
+        this.processPulse(this.timing.DASH_DURATION);
       }
       
       // Add symbol gap (except after last symbol)
       if (i < pattern.length - 1) {
-        this.processGap(33);
+        this.processGap(this.timing.SYMBOL_GAP);
       }
     }
   }

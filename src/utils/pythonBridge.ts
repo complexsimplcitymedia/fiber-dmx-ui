@@ -2,6 +2,7 @@
  * Python Bridge - Interface between React frontend and Python backend
  * Handles communication with the Python fiber tester logic
  */
+import { MORSE_TIMING, MORSE_PATTERNS } from './morseTimingConfig';
 
 export interface PythonResponse {
   success: boolean;
@@ -57,31 +58,11 @@ class PythonBridge {
    * Simulate Python logic in TypeScript for WebContainer compatibility
    */
   private async simulatePythonLogic(command: string, args: string[]): Promise<PythonResponse> {
-    // This simulates the Python FiberTesterController logic
-    const morseCode: { [key: string]: string } = {
-      'R': '·−·',
-      'G': '−−·',
-      'B': '−···',
-      '0': '−−−−−',
-      '1': '·−−−−',
-      '2': '··−−−',
-      '3': '···−−',
-      '4': '····−',
-      '5': '·····',
-      '6': '−····',
-      '7': '−−···',
-      '8': '−−−··',
-      '9': '−−−−·'
-    };
-    
-    const DOT_DURATION = 120;  // 0.12 seconds
-    const DASH_DURATION = 360;  // 0.36 seconds
-    const SYMBOL_GAP = 33;
-    const LETTER_GAP = 100;
-    const CONFIRMATION_FLASH = 167;
+    // Use shared timing constants for perfect sync
+    const { DOT_DURATION, DASH_DURATION, SYMBOL_GAP, LETTER_GAP, CONFIRMATION_FLASH, END_TRANSMISSION_GAP } = MORSE_TIMING;
     
     console.log('=== MORSE CODE DEBUG ===');
-    console.log('Morse patterns:', morseCode);
+    console.log('Morse patterns:', MORSE_PATTERNS);
     console.log('Timings - DOT:', DOT_DURATION, 'DASH:', DASH_DURATION, 'SYMBOL_GAP:', SYMBOL_GAP, 'LETTER_GAP:', LETTER_GAP);
     
     switch (command) {
@@ -135,7 +116,7 @@ class PythonBridge {
         
         // Add color transmission
         const colorLetter = selectedColor[0].toUpperCase();
-        const colorPattern = morseCode[colorLetter];
+        const colorPattern = MORSE_PATTERNS[colorLetter];
         console.log(`Color: ${selectedColor} -> Letter: ${colorLetter} -> Pattern: ${colorPattern}`);
         sequence.push(...this.patternToSequence(colorPattern, 'color', colorLetter, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
         sequence.push({
@@ -146,7 +127,7 @@ class PythonBridge {
         
         // Add number transmission
         for (const digit of selectedNumber) {
-          const digitPattern = morseCode[digit];
+          const digitPattern = MORSE_PATTERNS[digit];
           console.log(`Digit: ${digit} -> Pattern: ${digitPattern}`);
           sequence.push(...this.patternToSequence(digitPattern, 'digit', digit, DOT_DURATION, DASH_DURATION, SYMBOL_GAP));
           sequence.push({
@@ -163,10 +144,10 @@ class PythonBridge {
           description: 'Confirmation flash'
         });
         
-        // Add end-of-transmission gap
+        // Add end-of-transmission gap - CRITICAL for decoder sync
         sequence.push({
           type: 'gap',
-          duration: 600, // Long gap to signal end of transmission
+          duration: END_TRANSMISSION_GAP,
           description: 'End of transmission'
         });
         
