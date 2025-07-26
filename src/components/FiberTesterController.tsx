@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Power, Send, Infinity, Square } from 'lucide-react';
 
 const FiberTesterController: React.FC = () => {
@@ -8,19 +8,20 @@ const FiberTesterController: React.FC = () => {
   const [lightActive, setLightActive] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [loopActive, setLoopActive] = useState<boolean>(false);
-  const [loopRunning, setLoopRunning] = useState<boolean>(false);
+  const [loopRef, setLoopRef] = useState<{
+    current: boolean;
+  }>({ current: false });
 
-  // Perfect timing constants - EXACT from your table
-  const DOT_DURATION = 120;      // 120ms exactly
-  const DASH_DURATION = 360;     // 360ms exactly  
-  const SYMBOL_GAP = 120;        // 120ms exactly
+  const DOT_DURATION = 120;
+  const DASH_DURATION = 360;
+  const SYMBOL_GAP = 120;
+  const LETTER_GAP = 840;
   const CONFIRMATION_FLASH = 990;
 
-  // Correct International Morse Code patterns
   const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '·−·',     // Red
-    'G': '−−·',     // Green  
-    'B': '−···',    // Blue
+    'R': '·−·',
+    'G': '−−·',
+    'B': '−···',
     '0': '−−−−−',
     '1': '·−−−−',
     '2': '··−−−',
@@ -41,17 +42,12 @@ const FiberTesterController: React.FC = () => {
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''];
 
-  // Get light colors based on selected color
   const getLightColors = () => {
     switch (selectedColor) {
-      case 'Red':
-        return { on: 'bg-red-400 shadow-red-400/50', inner: 'bg-red-300', iconColor: 'text-red-800' };
-      case 'Green':
-        return { on: 'bg-green-400 shadow-green-400/50', inner: 'bg-green-300', iconColor: 'text-green-800' };
-      case 'Blue':
-        return { on: 'bg-blue-400 shadow-blue-400/50', inner: 'bg-blue-300', iconColor: 'text-blue-800' };
-      default:
-        return { on: 'bg-yellow-400 shadow-yellow-400/50', inner: 'bg-yellow-300', iconColor: 'text-yellow-800' };
+      case 'Red': return { on: 'bg-red-400 shadow-red-400/50', inner: 'bg-red-300', icon: 'text-red-800' };
+      case 'Green': return { on: 'bg-green-400 shadow-green-400/50', inner: 'bg-green-300', icon: 'text-green-800' };
+      case 'Blue': return { on: 'bg-blue-400 shadow-blue-400/50', inner: 'bg-blue-300', icon: 'text-blue-800' };
+      default: return { on: 'bg-yellow-400 shadow-yellow-400/50', inner: 'bg-yellow-300', icon: 'text-yellow-800' };
     }
   };
 
@@ -75,73 +71,39 @@ const FiberTesterController: React.FC = () => {
     }
   };
 
-  const handleClear = () => {
-    // Stop everything immediately
-    setLoopActive(false);
-    setLoopRunning(false);
-    setIsTransmitting(false);
-    setLightActive(false);
-    
-    // Clear selections
-    setCurrentNumber('');
-    setSelectedColor('');
-    setStatusMessage('Select color and number');
-  };
-
-  // Sleep function
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  // Flash light for specific duration
   const flashLight = async (duration: number) => {
-    if (!loopRunning && loopActive) return; // Stop if loop was cancelled
     setLightActive(true);
     await sleep(duration);
     setLightActive(false);
   };
 
-  // Transmit single Morse pattern
   const transmitMorsePattern = async (pattern: string) => {
     for (let i = 0; i < pattern.length; i++) {
-      if (!loopRunning && loopActive) return; // Stop if loop was cancelled
-      
+      if (!loopRef.current && loopActive) break;
       const symbol = pattern[i];
-      
-      if (symbol === '·') {
-        await flashLight(DOT_DURATION);
-      } else if (symbol === '−') {
-        await flashLight(DASH_DURATION);
-      }
-      
-      // Symbol gap between dots/dashes (except after last symbol)
-      if (i < pattern.length - 1) {
-        await sleep(SYMBOL_GAP);
-      }
+      if (symbol === '·') await flashLight(DOT_DURATION);
+      if (symbol === '−') await flashLight(DASH_DURATION);
+      if (i < pattern.length - 1) await sleep(SYMBOL_GAP);
     }
   };
 
-  // Complete transmission sequence
   const executeTransmission = async (color: string, number: string) => {
-    // Transmit color letter
-    const colorLetter = color[0].toUpperCase();
-    const colorPattern = MORSE_PATTERNS[colorLetter];
+    const colorPattern = MORSE_PATTERNS[color[0].toUpperCase()];
     if (colorPattern) {
       await transmitMorsePattern(colorPattern);
-      await sleep(LETTER_GAP); // Gap after color
+      await sleep(LETTER_GAP);
     }
-    
-    // Confirmation flash - 990ms
-    await flashLight(CONFIRMATION_FLASH);
-    for (let i = 0; i < number.length; i++) {
-      if (!loopRunning && loopActive) return; // Stop if loop was cancelled
-      
-      const digit = number[i];
+    for (const digit of number) {
+      if (!loopRef.current && loopActive) break;
       const digitPattern = MORSE_PATTERNS[digit];
       if (digitPattern) {
         await transmitMorsePattern(digitPattern);
-        // Gap after each digit (including the last one)
         await sleep(LETTER_GAP);
       }
     }
+    await flashLight(CONFIRMATION_FLASH);
   };
 
   const handleSend = async () => {
@@ -150,64 +112,47 @@ const FiberTesterController: React.FC = () => {
     setIsTransmitting(true);
     setStatusMessage(`Transmitting ${selectedColor} ${currentNumber}...`);
 
-    try {
-      await executeTransmission(selectedColor, currentNumber);
-      setStatusMessage(`${selectedColor} ${currentNumber} sent`);
-      
-      // Reset after transmission
-      setTimeout(() => {
-        setCurrentNumber('');
-        setSelectedColor('');
-        setStatusMessage('Select color and number');
-      }, 2000);
-
-    } catch (error) {
-      setStatusMessage(`Transmission failed`);
-    } finally {
-      setIsTransmitting(false);
-      setLightActive(false);
-    }
+    await executeTransmission(selectedColor, currentNumber);
+    
+    setIsTransmitting(false);
+    setStatusMessage(`${selectedColor} ${currentNumber} sent`);
+    
+    setTimeout(() => {
+      setCurrentNumber('');
+      setSelectedColor('');
+      setStatusMessage('Select color and number');
+    }, 2000);
   };
 
   const handleLoop = async () => {
     if (!selectedColor || !currentNumber || loopActive) return;
     
     setLoopActive(true);
-    setLoopRunning(true);
-    setStatusMessage(`Continuously transmitting ${selectedColor} ${currentNumber}...`);
+    loopRef.current = true;
+    setStatusMessage(`Looping ${selectedColor} ${currentNumber}...`);
     
-    try {
-      while (loopRunning) {
-        setIsTransmitting(true);
-        await executeTransmission(selectedColor, currentNumber);
-        setIsTransmitting(false);
-        
-        // Brief pause between transmissions
-        await sleep(500);
-        
-        // Check if loop was stopped
-        if (!loopRunning) break;
-      }
-    } catch (error) {
-      console.error('Loop error:', error);
-    } finally {
-      setLoopActive(false);
-      setLoopRunning(false);
+    while (loopRef.current) {
+      setIsTransmitting(true);
+      await executeTransmission(selectedColor, currentNumber);
       setIsTransmitting(false);
-      setLightActive(false);
+      await sleep(100);
     }
+    
+    setLoopActive(false);
+    setStatusMessage('Select color and number');
+    setCurrentNumber('');
+    setSelectedColor('');
   };
 
-  // Effect to handle loop state changes
-  useEffect(() => {
-    if (!loopActive) {
-      setLoopRunning(false);
-      setIsTransmitting(false);
-      setLightActive(false);
-    } else {
-      setLoopRunning(true);
-    }
-  }, [loopActive]);
+  const handleClear = () => {
+    loopRef.current = false;
+    setLoopActive(false);
+    setIsTransmitting(false);
+    setLightActive(false);
+    setCurrentNumber('');
+    setSelectedColor('');
+    setStatusMessage('Select color and number');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-8">
@@ -238,7 +183,7 @@ const FiberTesterController: React.FC = () => {
               
               <div className="absolute inset-0 flex items-center justify-center">
                 <Power className={`w-10 h-10 transition-all duration-75 ${
-                  lightActive ? lightColors.iconColor : 'text-slate-500'
+                  lightActive ? lightColors.icon : 'text-slate-500'
                 }`} />
               </div>
             </div>
