@@ -19,6 +19,18 @@ const SplitScreenController: React.FC = () => {
     setCurrentTransmission({ color, number, timestamp: Date.now() });
     console.log(`🚀 SIGNAL COMPLETE: ${color} ${number} at ${Date.now()}`);
   };
+  
+  const handleTransmissionPulse = (duration: number) => {
+    // FEED REAL PULSE DATA TO DECODER
+    console.log(`📡 PULSE: ${duration}ms`);
+    // TODO: Feed to decoder via SignalDecoder.getInstance().processPulse(duration)
+  };
+  
+  const handleTransmissionGap = (duration: number) => {
+    // FEED REAL GAP DATA TO DECODER  
+    console.log(`⏸️ GAP: ${duration}ms`);
+    // TODO: Feed to decoder via SignalDecoder.getInstance().processGap(duration)
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950">
       {/* Mode Toggle Header */}
@@ -115,6 +127,10 @@ const SplitScreenController: React.FC = () => {
                 <FiberTesterController 
                   onTransmissionChange={handleTransmissionStateChange}
                   onTransmissionData={handleTransmissionData}
+                  onTransmissionPulse={handleTransmissionPulse}
+                  onTransmissionGap={handleTransmissionGap}
+                  onTransmissionPulse={handleTransmissionPulse}
+                  onTransmissionGap={handleTransmissionGap}
                 />
               </div>
             </div>

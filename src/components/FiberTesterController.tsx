@@ -7,11 +7,15 @@ import TimecodeSync from '../utils/timecodeSync';
 interface FiberTesterControllerProps {
   onTransmissionChange?: (isTransmitting: boolean) => void;
   onTransmissionData?: (color: string, number: string) => void;
+  onTransmissionPulse?: (duration: number) => void;
+  onTransmissionGap?: (duration: number) => void;
 }
 
 const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ 
   onTransmissionChange, 
-  onTransmissionData 
+  onTransmissionData,
+  onTransmissionPulse,
+  onTransmissionGap
 }) => {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [currentNumber, setCurrentNumber] = useState<string>('');
@@ -130,10 +134,14 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
       setTransmissionTime(Date.now() - startTime);
     }, 1);
     
+    // FEED REAL PULSE DATA TO DECODER as transmission happens
     for (const step of sequence) {
       if (step.type === 'dot' || step.type === 'dash' || step.type === 'confirmation') {
         // Turn on light - EXACT timing
         setLightActive(true);
+        
+        // FEED DECODER: Real pulse with exact duration
+        onTransmissionPulse?.(step.duration);
         
         // EXACT timing - no delays, no approximation
         await new Promise(resolve => setTimeout(resolve, step.duration));
@@ -141,6 +149,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
         // Turn off light - EXACT timing
         setLightActive(false);
       } else if (step.type === 'gap') {
+        // FEED DECODER: Real gap with exact duration
+        onTransmissionGap?.(step.duration);
+        
         // EXACT gap timing - no approximation
         await new Promise(resolve => setTimeout(resolve, step.duration));
       }

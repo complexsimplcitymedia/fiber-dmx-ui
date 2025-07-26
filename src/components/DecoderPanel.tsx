@@ -8,12 +8,16 @@ interface DecoderPanelProps {
   isReceiving: boolean;
   transmissionData?: {color: string, number: string, timestamp: number} | null;
   onSimulateReceive?: (color: string, number: string) => void;
+  onPulseReceived?: (duration: number) => void;
+  onGapReceived?: (duration: number) => void;
 }
 
 const DecoderPanel: React.FC<DecoderPanelProps> = ({ 
   isReceiving, 
   transmissionData,
-  onSimulateReceive 
+  onSimulateReceive,
+  onPulseReceived,
+  onGapReceived
 }) => {
   const [decoder] = useState(() => SignalDecoder.getInstance());
   const [decodedSignals, setDecodedSignals] = useState<DecodedSignal[]>([]);
@@ -51,26 +55,8 @@ const DecoderPanel: React.FC<DecoderPanelProps> = ({
 
   // EXACT signal reception - no simulation delays
   useEffect(() => {
-    if (isListening && transmissionData) {
-      console.log(`🎯 DECODER RECEIVED: ${transmissionData.color} ${transmissionData.number} at ${transmissionData.timestamp}`);
-      
-      // EXACT decoding - mathematical precision
-      const { color, number } = transmissionData;
-      
-      // EXACT transmission decoding
-      const decoded = decoder.simulateTransmission(color, number);
-      if (decoded) {
-        const receptionTimecode = timecodeSync.getCurrentTimecode();
-        
-        setCurrentDecoding(decoded);
-        
-        // EXACT history timing
-        setTimeout(() => {
-          setDecodedSignals(prev => [decoded, ...prev.slice(0, 9)]);
-          setCurrentDecoding(null);
-        }, 1000); // EXACT 1 second
-      }
-    }
+    // REMOVED SIMULATION - Now using real pulse/gap data
+    // The decoder will be fed via processPulse() and processGap() calls
   }, [isListening, transmissionData, decoder, timecodeSync]);
 
   const getConfidenceColor = (confidence: number) => {
