@@ -389,22 +389,22 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
         </div>
 
         {/* Number Pad */}
-        <div className={`grid grid-cols-3 gap-4 mb-8 ${loopActive ? 'opacity-50' : ''}`}>
+        <div className={`grid grid-cols-3 gap-6 mb-8 ${loopActive ? 'opacity-50' : ''}`}>
           {numbers.map((num, index) => (
             <button
               key={index}
               onClick={() => handleNumberInput(num)}
               disabled={isTransmitting || loopActive || !num}
-              className={`relative h-18 rounded-xl bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 hover:from-slate-100 hover:to-slate-200
-                border-2 border-slate-400 shadow-xl transform transition-all duration-300
+              className={`relative w-20 h-20 rounded-lg bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 hover:from-slate-100 hover:to-slate-200
+                border-2 border-slate-400 shadow-xl transform transition-all duration-300 mx-auto
                 hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
                 ${!num ? 'invisible' : ''}`}
             >
               {/* Metallic overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/10 rounded-xl"></div>
-              <div className="absolute inset-0 border border-white/40 rounded-xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/10 rounded-lg"></div>
+              <div className="absolute inset-0 border border-white/40 rounded-lg"></div>
               
-              <div className="relative text-3xl font-light text-slate-800 flex items-center justify-center h-full">
+              <div className="relative text-2xl font-light text-slate-800 flex items-center justify-center h-full">
                 {num}
               </div>
             </button>
@@ -423,41 +423,47 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
           <button
             onClick={handleClear}
             disabled={false}
-            className={`relative flex items-center gap-3 px-6 py-4 overflow-hidden
+            className={`relative flex items-center justify-center gap-3 w-24 h-24 overflow-hidden
               ${loopActive ? 'bg-gradient-to-br from-red-700 to-red-800 border-red-400 animate-pulse shadow-red-500/25' : 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-red-600/25'}
-              text-white rounded-xl border-2 border-red-500 transition-all duration-300 shadow-xl
+              text-white rounded-lg border-2 border-red-500 transition-all duration-300 shadow-xl
               hover:scale-105 hover:shadow-2xl active:scale-95 font-light tracking-wide`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
-            <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
-            <Square className="w-5 h-5" />
-            STOP
+            <div className="absolute inset-0 border border-white/20 rounded-lg"></div>
+            <div className="flex flex-col items-center gap-1">
+              <Square className="w-6 h-6" />
+              <span className="text-xs">STOP</span>
+            </div>
           </button>
           
           <button
             onClick={handleSend}
             disabled={!selectedColor || !currentNumber || loopActive}
-            className="relative flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600
-              text-white rounded-xl border-2 border-emerald-500 transition-all duration-300 shadow-xl shadow-emerald-600/25
+            className="relative flex items-center justify-center gap-3 w-24 h-24 bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600
+              text-white rounded-lg border-2 border-emerald-500 transition-all duration-300 shadow-xl shadow-emerald-600/25
               hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-light tracking-wide overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
-            <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
-            <RotateCcw className="w-5 h-5" />
-            {isTransmitting && !loopActive ? 'SENDING...' : 'SEND'}
+            <div className="absolute inset-0 border border-white/20 rounded-lg"></div>
+            <div className="flex flex-col items-center gap-1">
+              <RotateCcw className="w-6 h-6" />
+              <span className="text-xs">{isTransmitting && !loopActive ? 'SENDING' : 'SEND'}</span>
+            </div>
           </button>
 
           <button
             onClick={handleLoop}
             disabled={!selectedColor || !currentNumber || loopActive}
-            className={`relative flex items-center gap-3 px-8 py-4 text-white rounded-xl border-2 transition-all duration-300 shadow-xl
+            className={`relative flex items-center justify-center gap-3 w-24 h-24 text-white rounded-lg border-2 transition-all duration-300 shadow-xl
               hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-light tracking-wide overflow-hidden
               bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-500 shadow-blue-600/25`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
-            <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
-            <Infinity className="w-5 h-5" />
-            LOOP
+            <div className="absolute inset-0 border border-white/20 rounded-lg"></div>
+            <div className="flex flex-col items-center gap-1">
+              <Infinity className="w-6 h-6" />
+              <span className="text-xs">LOOP</span>
+            </div>
           </button>
         </div>
 

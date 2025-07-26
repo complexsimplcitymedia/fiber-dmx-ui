@@ -28,45 +28,45 @@ const SplitScreenController: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSplitMode('transmitter')}
-              className={`px-4 py-2 rounded-lg transition-all duration-300 font-light tracking-wide ${
+              className={`w-32 h-12 rounded-lg transition-all duration-300 font-light tracking-wide flex items-center justify-center gap-2 ${
                 splitMode === 'transmitter'
                   ? 'bg-emerald-600 text-white shadow-emerald-600/25'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               }`}
             >
-              <Maximize2 className="w-4 h-4 inline mr-2" />
+              <Maximize2 className="w-4 h-4" />
               Transmitter
             </button>
             
             <button
               onClick={() => setSplitMode('split')}
-              className={`px-4 py-2 rounded-lg transition-all duration-300 font-light tracking-wide ${
+              className={`w-32 h-12 rounded-lg transition-all duration-300 font-light tracking-wide flex items-center justify-center gap-2 ${
                 splitMode === 'split'
                   ? 'bg-blue-600 text-white shadow-blue-600/25'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               }`}
             >
-              <Split className="w-4 h-4 inline mr-2" />
+              <Split className="w-4 h-4" />
               Split View
             </button>
             
             <button
               onClick={() => setSplitMode('decoder')}
-              className={`px-4 py-2 rounded-lg transition-all duration-300 font-light tracking-wide ${
+              className={`w-32 h-12 rounded-lg transition-all duration-300 font-light tracking-wide flex items-center justify-center gap-2 ${
                 splitMode === 'decoder'
                   ? 'bg-purple-600 text-white shadow-purple-600/25'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               }`}
             >
-              <Minimize2 className="w-4 h-4 inline mr-2" />
+              <Minimize2 className="w-4 h-4" />
               Decoder
             </button>
             
             {/* Jam Sync Button - like professional equipment */}
             <button
               onClick={() => timecodeSync.jamSync()}
-              className="px-4 py-2 bg-gradient-to-br from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600
-                text-white rounded-lg border-2 border-amber-500 transition-all duration-300 shadow-xl shadow-amber-600/25
+              className="w-32 h-12 bg-gradient-to-br from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600
+                text-white rounded-lg border-2 border-amber-500 transition-all duration-300 shadow-xl shadow-amber-600/25 flex items-center justify-center
                 hover:scale-105 font-light tracking-wide"
               title="Reset timecode synchronization"
             >
