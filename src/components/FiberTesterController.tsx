@@ -142,3 +142,5 @@ const FiberTesterController: React.FC = () => {
     
     // Confirmation flash
     await flashLight(CONFIRMATION_FLASH);
+  }
+}
