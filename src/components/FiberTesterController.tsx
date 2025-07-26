@@ -487,6 +487,18 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
             </div>
           </div>
         )}
+
+        {/* DMX Professional Branding */}
+        <div className="fixed bottom-6 left-6 z-10">
+          <div className="bg-slate-900/90 backdrop-blur-sm rounded-lg px-4 py-3 border border-slate-600/50 shadow-xl">
+            <div className="text-amber-400 font-bold text-lg tracking-wider mb-1">
+              POWERED BY DMX
+            </div>
+            <div className="text-slate-400 text-sm font-light leading-tight">
+              The industry standard for precision lighting control for over 40 years.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
