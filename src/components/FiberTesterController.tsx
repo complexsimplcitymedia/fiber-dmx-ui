@@ -344,6 +344,18 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
 
         {/* Status Display */}
         <div className={`bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 mb-8 border border-slate-600 shadow-xl ${loopActive ? 'opacity-50' : ''}`}>
+          {/* DMX Professional Branding - Hardware Silkscreen Style */}
+          <div className="absolute -top-12 left-4">
+            <div className="bg-slate-900/90 backdrop-blur-sm rounded-lg px-4 py-3 border border-slate-600/50 shadow-xl">
+              <div className="text-amber-400 font-bold text-lg tracking-wider mb-1">
+                POWERED BY DMX
+              </div>
+              <div className="text-slate-400 text-sm font-light leading-tight">
+                The industry standard for precision lighting control for over 40 years.
+              </div>
+            </div>
+          </div>
+          
           <div className="text-center">
             <div className="retro-digital-display mb-4" style={{ fontSize: '2.5rem', lineHeight: '1.4' }}>
               {statusMessage}
@@ -488,17 +500,6 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({
           </div>
         )}
 
-        {/* DMX Professional Branding */}
-        <div className="fixed bottom-6 left-6 z-10">
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-lg px-4 py-3 border border-slate-600/50 shadow-xl">
-            <div className="text-amber-400 font-bold text-lg tracking-wider mb-1">
-              POWERED BY DMX
-            </div>
-            <div className="text-slate-400 text-sm font-light leading-tight">
-              The industry standard for precision lighting control for over 40 years.
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
