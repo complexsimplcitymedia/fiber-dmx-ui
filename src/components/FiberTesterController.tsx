@@ -250,74 +250,90 @@ const FiberTesterController: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Fiber Tester Controller</h1>
-          <p className="text-gray-300">Select color and number to transmit Morse code</p>
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-light text-transparent bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text mb-4 tracking-wide">
+            Fiber Tester Controller
+          </h1>
+          <div className="w-32 h-px bg-gradient-to-r from-transparent via-slate-400 to-transparent mx-auto mb-4"></div>
+          <p className="text-slate-400 font-light tracking-wide">Professional Morse Code Transmission System</p>
         </div>
 
         {/* Status Light */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-12">
           <div className="relative">
             {/* Main enclosure */}
-            <div className="w-24 h-24 rounded-full border-4 border-gray-600 bg-gray-800 relative overflow-hidden">
+            <div className="w-32 h-32 rounded-full border-4 border-slate-600 bg-gradient-to-br from-slate-800 via-slate-900 to-black relative overflow-hidden shadow-2xl">
+              {/* Metallic ring */}
+              <div className="absolute inset-0 rounded-full border-2 border-slate-500 shadow-inner"></div>
+              <div className="absolute inset-1 rounded-full border border-slate-400/30"></div>
+              
               {/* Single light */}
-              <div className={`absolute inset-0 rounded-full transition-all duration-75 ${
-                lightActive ? `${lightColors.on} shadow-lg` : 'bg-gray-800'
+              <div className={`absolute inset-2 rounded-full transition-all duration-75 ${
+                lightActive ? `${lightColors.on} shadow-2xl shadow-current` : 'bg-gradient-to-br from-slate-800 to-slate-900'
               }`}>
                 <div className={`absolute inset-1 rounded-full transition-all duration-75 ${
-                  lightActive ? `${lightColors.inner} shadow-inner` : 'bg-gray-700'
+                  lightActive ? `${lightColors.inner} shadow-inner` : 'bg-gradient-to-br from-slate-700 to-slate-800'
                 }`} />
               </div>
               
               {/* Power icon overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <Power className={`w-8 h-8 transition-all duration-75 ${
-                  lightActive ? lightColors.iconColor : 'text-gray-500'
+                <Power className={`w-10 h-10 transition-all duration-75 ${
+                  lightActive ? lightColors.iconColor : 'text-slate-500'
                 }`} />
               </div>
             </div>
-            <div className="text-center mt-2 text-sm text-gray-400">Signal Light</div>
+            <div className="text-center mt-4 text-sm text-slate-400 font-light tracking-wider">SIGNAL LIGHT</div>
           </div>
         </div>
 
         {/* Big Timer Display - shown when looping */}
         {loopActive && (
-          <div className="text-center mb-8">
-            <div className="text-8xl font-mono font-bold text-white mb-4">
-              {(transmissionTime / 1000).toFixed(2)}s
-            </div>
-            <div className="text-2xl text-gray-300 mb-4 font-semibold">
-              Continuously flashing {selectedColor} {currentNumber}
-            </div>
-            <div className="w-96 h-6 bg-gray-700 rounded-full mb-4 mx-auto overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-100 ${
-                  lightActive ? `${lightColors.on.replace('bg-', 'bg-').replace('-400', '-500')}` : 'bg-gray-600'
-                }`}
-                style={{
-                  width: expectedDuration > 0 ? `${Math.min((transmissionTime / expectedDuration) * 100, 100)}%` : '0%'
-                }}
-              />
-            </div>
-            <div className="text-lg text-gray-400 mb-6">
-              Expected: {(expectedDuration / 1000).toFixed(2)}s | 
-              {transmissionTime > expectedDuration ? (
-                <span className="text-yellow-400 ml-2">Overtime</span>
-              ) : (
-                <span className="text-green-400 ml-2">On Time</span>
-              )}
+          <div className="text-center mb-12">
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-8 border border-slate-600 shadow-2xl mb-6">
+              <div className="text-9xl font-mono font-light text-transparent bg-gradient-to-r from-slate-200 via-white to-slate-200 bg-clip-text mb-4 tracking-wider">
+                {(transmissionTime / 1000).toFixed(2)}s
+              </div>
+              <div className="text-2xl text-slate-300 mb-6 font-light tracking-wide">
+                Continuously flashing {selectedColor} {currentNumber}
+              </div>
+              
+              {/* Premium progress bar */}
+              <div className="relative w-96 h-3 bg-slate-800 rounded-full mb-4 mx-auto overflow-hidden border border-slate-600">
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-700 to-slate-800 rounded-full"></div>
+                <div 
+                  className={`h-full transition-all duration-100 rounded-full ${
+                    lightActive ? `bg-gradient-to-r ${lightColors.on.replace('bg-', 'from-').replace('-400', '-400')} to-white shadow-lg` : 'bg-gradient-to-r from-slate-600 to-slate-500'
+                  }`}
+                  style={{
+                    width: expectedDuration > 0 ? `${Math.min((transmissionTime / expectedDuration) * 100, 100)}%` : '0%'
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full border border-slate-500/50"></div>
+              </div>
+              
+              <div className="text-lg text-slate-400 mb-6 font-light">
+                Expected: {(expectedDuration / 1000).toFixed(2)}s | 
+                {transmissionTime > expectedDuration ? (
+                  <span className="text-amber-400 ml-2 font-medium">Overtime</span>
+                ) : (
+                  <span className="text-emerald-400 ml-2 font-medium">On Time</span>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* Status Display */}
-        <div className={`bg-gray-800 rounded-lg p-4 mb-6 border-2 border-gray-700 ${loopActive ? 'opacity-50' : ''}`}>
+        <div className={`bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-6 mb-8 border border-slate-600 shadow-xl ${loopActive ? 'opacity-50' : ''}`}>
           <div className="text-center">
-            <div className="text-lg font-semibold text-white mb-2">{statusMessage}</div>
-            <div className="text-sm text-gray-400">
+            <div className="text-xl font-light text-slate-200 mb-3 tracking-wide">{statusMessage}</div>
+            <div className="text-sm text-slate-400 font-light">
+              {(transmissionTime / 1000).toFixed(2)}s
+            </div>
               {selectedColor && `Color: ${selectedColor}`}
               {selectedColor && currentNumber && ' | '}
               {currentNumber && `Number: ${currentNumber}`}
@@ -326,18 +342,23 @@ const FiberTesterController: React.FC = () => {
         </div>
 
         {/* Color Buttons */}
-        <div className={`grid grid-cols-3 gap-4 mb-6 ${loopActive ? 'opacity-50' : ''}`}>
+        <div className={`grid grid-cols-3 gap-6 mb-8 ${loopActive ? 'opacity-50' : ''}`}>
           {colors.map((color) => (
             <button
               key={color.name}
               onClick={() => handleColorSelect(color.name)}
               disabled={isTransmitting || loopActive}
-              className={`h-24 rounded-2xl ${color.bgColor} ${color.hoverColor} 
-                border-4 border-gray-600 shadow-lg transform transition-all duration-200
-                hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-                ${selectedColor === color.name ? 'ring-4 ring-yellow-400' : ''}`}
+              className={`relative h-28 rounded-2xl ${color.bgColor} ${color.hoverColor} 
+                border-2 border-slate-600 shadow-2xl transform transition-all duration-300
+                hover:scale-105 hover:shadow-3xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+                ${selectedColor === color.name ? 'ring-2 ring-amber-400 shadow-amber-400/25' : ''}
+                bg-gradient-to-br overflow-hidden`}
             >
-              <div className="text-4xl font-bold text-white opacity-80">
+              {/* Metallic overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
+              <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
+              
+              <div className="relative text-5xl font-light text-white/90 flex items-center justify-center h-full tracking-wider">
                 {color.letter}
               </div>
             </button>
@@ -345,18 +366,22 @@ const FiberTesterController: React.FC = () => {
         </div>
 
         {/* Number Pad */}
-        <div className={`grid grid-cols-3 gap-3 mb-6 ${loopActive ? 'opacity-50' : ''}`}>
+        <div className={`grid grid-cols-3 gap-4 mb-8 ${loopActive ? 'opacity-50' : ''}`}>
           {numbers.map((num, index) => (
             <button
               key={index}
               onClick={() => handleNumberInput(num)}
               disabled={isTransmitting || loopActive || !num}
-              className={`h-16 rounded-xl bg-gray-200 hover:bg-gray-300 
-                border-4 border-gray-600 shadow-lg transform transition-all duration-200
-                hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+              className={`relative h-18 rounded-xl bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 hover:from-slate-100 hover:to-slate-200
+                border-2 border-slate-400 shadow-xl transform transition-all duration-300
+                hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
                 ${!num ? 'invisible' : ''}`}
             >
-              <div className="text-2xl font-bold text-gray-800">
+              {/* Metallic overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-black/10 rounded-xl"></div>
+              <div className="absolute inset-0 border border-white/40 rounded-xl"></div>
+              
+              <div className="relative text-3xl font-light text-slate-800 flex items-center justify-center h-full">
                 {num}
               </div>
             </button>
@@ -365,55 +390,62 @@ const FiberTesterController: React.FC = () => {
 
         {/* Control Buttons */}
         {loopActive && (
-          <div className="flex items-center justify-center text-green-400 font-bold mb-2">
+          <div className="flex items-center justify-center text-emerald-400 font-light mb-4 tracking-wide">
             <Infinity className="w-5 h-5 mr-2" />
-            Looping...
+            LOOPING...
           </div>
         )}
         
-        <div className="flex gap-3 justify-center mb-6">
+        <div className="flex gap-6 justify-center mb-8">
           <button
             onClick={handleClear}
             disabled={false}
-            className={`flex items-center gap-2 px-4 py-3
-              ${loopActive ? 'bg-red-700 border-red-400 animate-pulse' : 'bg-red-600 hover:bg-red-700'}
-              text-white rounded-lg border-2 border-gray-500 transition-all duration-200
-              hover:scale-105 active:scale-95`}
+            className={`relative flex items-center gap-3 px-6 py-4 overflow-hidden
+              ${loopActive ? 'bg-gradient-to-br from-red-700 to-red-800 border-red-400 animate-pulse shadow-red-500/25' : 'bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-red-600/25'}
+              text-white rounded-xl border-2 border-red-500 transition-all duration-300 shadow-xl
+              hover:scale-105 hover:shadow-2xl active:scale-95 font-light tracking-wide`}
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
+            <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
             <Square className="w-5 h-5" />
-            Stop
+            STOP
           </button>
           
           <button
             onClick={handleSend}
             disabled={!selectedColor || !currentNumber || loopActive}
-            className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 
-              text-white rounded-lg border-2 border-green-500 transition-all duration-200
-              hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600
+              text-white rounded-xl border-2 border-emerald-500 transition-all duration-300 shadow-xl shadow-emerald-600/25
+              hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-light tracking-wide overflow-hidden"
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
+            <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
             <RotateCcw className="w-5 h-5" />
-            {isTransmitting && !loopActive ? 'Sending...' : 'Send'}
+            {isTransmitting && !loopActive ? 'SENDING...' : 'SEND'}
           </button>
 
           <button
             onClick={handleLoop}
             disabled={!selectedColor || !currentNumber || loopActive}
-            className={`flex items-center gap-2 px-6 py-3 text-white rounded-lg border-2 transition-all duration-200
-              hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-              bg-blue-600 hover:bg-blue-700 border-blue-500`}
+            className={`relative flex items-center gap-3 px-8 py-4 text-white rounded-xl border-2 transition-all duration-300 shadow-xl
+              hover:scale-105 hover:shadow-2xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-light tracking-wide overflow-hidden
+              bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-500 shadow-blue-600/25`}
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
+            <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
             <Infinity className="w-5 h-5" />
-            Loop
+            LOOP
           </button>
         </div>
 
         {/* Transmission History */}
         {sentHistory.length > 0 && (
-          <div className="bg-gray-800 rounded-lg p-4 border-2 border-gray-700">
-            <h3 className="text-white font-semibold mb-2">Recent Transmissions</h3>
-            <div className="space-y-1">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl p-6 border border-slate-600 shadow-xl">
+            <h3 className="text-slate-200 font-light mb-4 tracking-wide text-lg">RECENT TRANSMISSIONS</h3>
+            <div className="w-16 h-px bg-gradient-to-r from-slate-600 to-transparent mb-4"></div>
+            <div className="space-y-2">
               {sentHistory.map((message, index) => (
-                <div key={index} className="text-sm text-gray-300 opacity-80">
+                <div key={index} className="text-sm text-slate-400 opacity-80 font-light tracking-wide">
                   {message}
                 </div>
               ))}
