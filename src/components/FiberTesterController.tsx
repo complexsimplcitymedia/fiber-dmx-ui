@@ -25,9 +25,9 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
   const [timecodeSync] = useState(() => TimecodeSync.getInstance());
 
   const colors = [
-    { name: 'Red', letter: 'R', bgColor: 'bg-red-600', hoverColor: 'hover:bg-red-700' },
-    { name: 'Green', letter: 'G', bgColor: 'bg-green-600', hoverColor: 'hover:bg-green-700' },
-    { name: 'Blue', letter: 'B', bgColor: 'bg-blue-600', hoverColor: 'hover:bg-blue-700' }
+    { name: 'Red', letter: 'R', bgColor: 'bg-gradient-to-br from-red-500 to-red-700', hoverColor: 'hover:from-red-400 hover:to-red-600', textColor: 'text-white' },
+    { name: 'Green', letter: 'G', bgColor: 'bg-gradient-to-br from-green-500 to-green-700', hoverColor: 'hover:from-green-400 hover:to-green-600', textColor: 'text-white' },
+    { name: 'Blue', letter: 'B', bgColor: 'bg-gradient-to-br from-blue-500 to-blue-700', hoverColor: 'hover:from-blue-400 hover:to-blue-600', textColor: 'text-white' }
   ];
 
   // Get light colors based on selected color
@@ -375,13 +375,13 @@ const FiberTesterController: React.FC<FiberTesterControllerProps> = ({ onTransmi
                 border-2 border-slate-600 shadow-2xl transform transition-all duration-300
                 hover:scale-105 hover:shadow-3xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
                 ${selectedColor === color.name ? 'ring-2 ring-amber-400 shadow-amber-400/25' : ''}
-                bg-gradient-to-br overflow-hidden`}
+                overflow-hidden`}
             >
               {/* Metallic overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
               <div className="absolute inset-0 border border-white/20 rounded-2xl"></div>
               
-              <div className="relative text-5xl font-light text-white/90 flex items-center justify-center h-full tracking-wider">
+              <div className={`relative text-5xl font-light ${color.textColor} flex items-center justify-center h-full tracking-wider`}>
                 {color.letter}
               </div>
             </button>
