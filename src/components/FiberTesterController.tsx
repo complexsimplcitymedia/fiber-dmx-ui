@@ -17,7 +17,7 @@ const FiberTesterController: React.FC = () => {
   const CONFIRMATION_FLASH = 990;
 
   const MORSE_PATTERNS: { [key: string]: string } = {
-    'R': '.-.',     // dot-dash-dot
+    'R': '·−·',     // dot-dash-dot
     'G': '--.',     // dash-dash-dot  
     'B': '-...',    // dash-dot-dot-dot
     '0': '-----',   // 5 dashes
