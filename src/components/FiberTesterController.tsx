@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Power, Send, Infinity, Square } from 'lucide-react';
+import OLAExporter from './OLAExporter';
 
 const FiberTesterController: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<string>('');
@@ -9,6 +10,7 @@ const FiberTesterController: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>('Select color and number');
   const [loopActive, setLoopActive] = useState<boolean>(false);
   const [loopRef, setLoopRef] = useState<{ current: boolean }>({ current: false });
+  const [showOLAExporter, setShowOLAExporter] = useState<boolean>(false);
 
   // Perfect timing constants - EXACT
   const DOT_DURATION = 120;
@@ -184,6 +186,10 @@ const FiberTesterController: React.FC = () => {
       setIsTransmitting(false);
       setStatusMessage(`${selectedColor} ${currentNumber} ready`);
     }
+  };
+
+  const handleOLAExport = (config: any) => {
+    console.log('OLA configuration exported:', config);
   };
 
   return (
@@ -374,6 +380,28 @@ const FiberTesterController: React.FC = () => {
               )}
             </button>
           </div>
+        </div>
+
+        {/* OLA Export Section */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-white">Professional Lighting Integration</h2>
+            <button
+              onClick={() => setShowOLAExporter(!showOLAExporter)}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors duration-200"
+            >
+              {showOLAExporter ? 'Hide' : 'Show'} OLA Export
+            </button>
+          </div>
+          
+          {showOLAExporter && (
+            <OLAExporter
+              selectedColor={selectedColor}
+              currentNumber={currentNumber}
+              isTransmitting={isTransmitting}
+              onExport={handleOLAExport}
+            />
+          )}
         </div>
       </div>
     </div>
