@@ -60,21 +60,17 @@ const OLAExporter: React.FC<OLAExporterProps> = ({
   const generateOLAScript = () => {
     if (!selectedColor || !currentNumber) return '';
 
-    const colorChannels = {
-      'Red': { r: 255, g: 0, b: 0 },
-      'Green': { r: 0, g: 255, b: 0 },
-      'Blue': { r: 0, g: 0, b: 255 }
-    };
-
-    const color = colorChannels[selectedColor as keyof typeof colorChannels];
+    // Use 12 channels for the selected color
+    const channelValue = 255; // Full brightness for selected color
     
     return `#!/bin/bash
 # OLA DMX Script for Fiber Optic Tester
 # Generated for: ${selectedColor} ${currentNumber}
-# Universe: ${config.universe}, Starting Channel: ${config.channel}
+# Universe: ${config.universe}, Channels: ${config.channel}-${config.channel + 11} (12 channels)
+# Color: ${selectedColor}
 
-# Set color channels
-ola_streaming_client -u ${config.universe} -d ${config.channel}:${color.r},${config.channel + 1}:${color.g},${config.channel + 2}:${color.b}
+# Set all 12 channels for ${selectedColor}
+ola_streaming_client -u ${config.universe} -d ${Array.from({length: 12}, (_, i) => `${config.channel + i}:${channelValue}`).join(',')}
 
 # Morse code transmission for ${selectedColor} ${currentNumber}
 # Color: ${selectedColor[0].toUpperCase()} = ${getMorsePattern(selectedColor[0].toUpperCase())}
@@ -118,6 +114,7 @@ echo "Transmitting ${selectedColor} ${currentNumber} via DMX Universe ${config.u
 """
 OLA Python Script for Fiber Optic Tester
 Generated for: ${selectedColor} ${currentNumber}
+Uses 12 DMX channels for ${selectedColor} color
 Requires: python3-ola package on Raspberry Pi
 """
 
@@ -127,7 +124,8 @@ from ola.ClientWrapper import ClientWrapper
 
 # Configuration
 UNIVERSE = ${config.universe}
-CHANNEL = ${config.channel}
+START_CHANNEL = ${config.channel}
+NUM_CHANNELS = 12
 COLOR = "${selectedColor}"
 NUMBER = "${currentNumber}"
 
@@ -138,12 +136,8 @@ SYMBOL_GAP = 0.120
 LETTER_GAP = 0.840
 CONFIRMATION_FLASH = 0.990
 
-# Color values
-COLORS = {
-    'Red': [255, 0, 0],
-    'Green': [0, 255, 0],
-    'Blue': [0, 0, 255]
-}
+# Channel value for selected color
+CHANNEL_VALUE = 255
 
 # Morse patterns
 MORSE_PATTERNS = {
@@ -156,13 +150,13 @@ def send_dmx(wrapper, data):
     """Send DMX data to OLA"""
     wrapper.Client().SendDmx(UNIVERSE, data)
 
-def flash_light(wrapper, duration, color_values):
-    """Flash the light for specified duration"""
+def flash_light(wrapper, duration):
+    """Flash all 12 channels for specified duration"""
     # Turn on
     data = array.array('B', [0] * 512)
-    for i, value in enumerate(color_values):
-        if CHANNEL + i < 512:
-            data[CHANNEL + i] = value
+    for i in range(NUM_CHANNELS):
+        if START_CHANNEL + i < 512:
+            data[START_CHANNEL + i] = CHANNEL_VALUE
     send_dmx(wrapper, data)
     
     time.sleep(duration)
@@ -171,13 +165,13 @@ def flash_light(wrapper, duration, color_values):
     data = array.array('B', [0] * 512)
     send_dmx(wrapper, data)
 
-def transmit_morse_pattern(wrapper, pattern, color_values):
+def transmit_morse_pattern(wrapper, pattern):
     """Transmit a Morse code pattern"""
     for i, symbol in enumerate(pattern):
         if symbol == '·':
-            flash_light(wrapper, DOT_DURATION, color_values)
+            flash_light(wrapper, DOT_DURATION)
         elif symbol == '−':
-            flash_light(wrapper, DASH_DURATION, color_values)
+            flash_light(wrapper, DASH_DURATION)
         
         # Symbol gap (except after last symbol)
         if i < len(pattern) - 1:
@@ -188,27 +182,25 @@ def main():
     wrapper = ClientWrapper()
     
     print(f"Starting OLA transmission: {COLOR} {NUMBER}")
-    print(f"Universe: {UNIVERSE}, Channel: {CHANNEL}")
-    
-    color_values = COLORS[COLOR]
+    print(f"Universe: {UNIVERSE}, Channels: {START_CHANNEL}-{START_CHANNEL + NUM_CHANNELS - 1}")
     
     # Transmit color
     color_letter = COLOR[0].upper()
     color_pattern = MORSE_PATTERNS[color_letter]
     print(f"Transmitting color {color_letter}: {color_pattern}")
-    transmit_morse_pattern(wrapper, color_pattern, color_values)
+    transmit_morse_pattern(wrapper, color_pattern)
     time.sleep(LETTER_GAP)
     
     # Transmit each digit
     for digit in NUMBER:
         digit_pattern = MORSE_PATTERNS[digit]
         print(f"Transmitting digit {digit}: {digit_pattern}")
-        transmit_morse_pattern(wrapper, digit_pattern, color_values)
+        transmit_morse_pattern(wrapper, digit_pattern)
         time.sleep(LETTER_GAP)
     
     # Confirmation flash
     print("Confirmation flash")
-    flash_light(wrapper, CONFIRMATION_FLASH, color_values)
+    flash_light(wrapper, CONFIRMATION_FLASH)
     
     print("Transmission complete")
     wrapper.Stop()
@@ -276,7 +268,7 @@ if __name__ == "__main__":
           <input
             type="number"
             min="1"
-            max="510"
+            max="501"
             value={config.channel}
             onChange={(e) => setConfig({...config, channel: parseInt(e.target.value)})}
             className="w-full px-3 py-2 bg-black/50 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
@@ -337,7 +329,7 @@ if __name__ == "__main__":
           1. Install OLA on Raspberry Pi: <code>sudo apt install ola</code><br/>
           2. Configure your DMX interface<br/>
           3. Export and run the script on your Pi<br/>
-          4. Connect RGB LED fixture to channels {config.channel}-{config.channel + 2}
+          4. Connect {selectedColor} LED fixtures to channels {config.channel}-{config.channel + 11} (12 channels)
         </p>
       </div>
     </div>
